@@ -165,7 +165,7 @@ Tambahkan Widget Tests untuk memastikan komponen UI penting berfungsi seperti ya
 
 Sprint 7 (Minggu 13-14): Persiapan Rilis & Buffer
 
-Tujuan Sprint: Aplikasi siap untuk diunggah ke Google Play Store dan Apple App Store. Semua aset dan metadata rilis sudah lengkap.
+Tujuan Sprint: Aplikasi siap untuk diunggah ke Google Play Store . Semua aset dan metadata rilis sudah lengkap.
 
 [ ] Aset Rilis:
 
@@ -179,13 +179,13 @@ Ambil screenshots aplikasi untuk halaman listing di store.
 
 Lakukan konfigurasi rilis di Flutter (version code, version name, signing).
 
-Buat build rilis final (.aab untuk Google Play, .ipa untuk App Store).
+Buat build rilis final (.aab untuk Google Play).
 
 Lakukan smoke testing terakhir pada build rilis.
 
 [ ] Publikasi:
 
-Siapkan halaman listing di Google Play Console dan App Store Connect.
+Siapkan halaman listing di Google Play Console .
 
 Tulis deskripsi aplikasi, kebijakan privasi, dan isi semua metadata yang diperlukan.
 
