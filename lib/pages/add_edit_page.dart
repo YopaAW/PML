@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../providers/reminder_provider.dart';
+import '../providers/category_provider.dart'; // Import category provider
+import '../models/category_model.dart' as app_models; // Import category model
 
 class AddEditPage extends ConsumerStatefulWidget {
   const AddEditPage({super.key});
@@ -13,6 +15,8 @@ class AddEditPage extends ConsumerStatefulWidget {
 class _AddEditPageState extends ConsumerState<AddEditPage> {
   final _titleController = TextEditingController();
   DateTime? _selectedDate;
+  TimeOfDay? _selectedTime;
+  app_models.Category? _selectedCategory; // New state variable for selected category
 
   @override
   void dispose() {
@@ -22,19 +26,25 @@ class _AddEditPageState extends ConsumerState<AddEditPage> {
 
   void _saveReminder() async {
     if (_titleController.text.isEmpty || _selectedDate == null) {
-      // Tampilkan pesan error jika data tidak lengkap
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Judul dan tanggal harus diisi!')),
       );
       return;
     }
 
-    // Tambahkan data melalui notifier
-    ref
-        .read(reminderListProvider.notifier)
-        .addReminder(_titleController.text, _selectedDate!);
+    final time = _selectedTime ?? TimeOfDay.now();
+    final eventDate = DateTime(
+      _selectedDate!.year,
+      _selectedDate!.month,
+      _selectedDate!.day,
+      time.hour,
+      time.minute,
+    );
 
-    // Kembali ke halaman sebelumnya atau ke root jika tidak bisa pop
+    await ref
+        .read(reminderListProvider.notifier)
+        .addReminder(_titleController.text, eventDate, categoryId: _selectedCategory?.id);
+
     if (!mounted) return;
     if (context.canPop()) {
       context.pop();
@@ -43,8 +53,44 @@ class _AddEditPageState extends ConsumerState<AddEditPage> {
     }
   }
 
+  Future<void> _showAddCategoryDialog() async {
+    final newCategoryNameController = TextEditingController();
+    return showDialog<void>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Tambah Kategori Baru'),
+          content: TextField(
+            controller: newCategoryNameController,
+            decoration: const InputDecoration(hintText: 'Nama Kategori'),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Batal'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: const Text('Tambah'),
+              onPressed: () async {
+                if (newCategoryNameController.text.isNotEmpty) {
+                  await ref.read(categoryListProvider.notifier).addCustomCategory(newCategoryNameController.text);
+                  Navigator.of(context).pop();
+                }
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final availableCategories = ref.watch(availableCategoriesProvider);
+    final isSubscribed = ref.watch(isSubscribedProvider);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Pengingat Baru'),
@@ -101,6 +147,15 @@ class _AddEditPageState extends ConsumerState<AddEditPage> {
                 context.go('/about');
               },
             ),
+            // Toggle Subscription Status for testing
+            ListTile(
+              leading: Icon(isSubscribed ? Icons.star : Icons.star_border),
+              title: Text(isSubscribed ? 'Berlangganan' : 'Gratis'),
+              onTap: () {
+                ref.read(isSubscribedProvider.notifier).state = !isSubscribed;
+                Navigator.of(context).pop();
+              },
+            ),
           ],
         ),
       ),
@@ -138,6 +193,60 @@ class _AddEditPageState extends ConsumerState<AddEditPage> {
                     }
                   },
                 ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    _selectedTime == null
+                        ? 'Pilih Waktu'
+                        : 'Waktu: ${_selectedTime!.format(context)}',
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.access_time),
+                  onPressed: () async {
+                    final time = await showTimePicker(
+                      context: context,
+                      initialTime: TimeOfDay.now(),
+                    );
+                    if (time != null) {
+                      setState(() {
+                        _selectedTime = time;
+                      });
+                    }
+                  },
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: DropdownButtonFormField<app_models.Category>(
+                    value: _selectedCategory,
+                    decoration: const InputDecoration(labelText: 'Kategori'),
+                    hint: Text('Pilih Kategori (${availableCategories.length} tersedia)'),
+                    items: availableCategories.map((category) {
+                      return DropdownMenuItem<app_models.Category>(
+                        value: category,
+                        child: Text(category.name),
+                      );
+                    }).toList(),
+                    onChanged: (app_models.Category? newValue) {
+                      setState(() {
+                        _selectedCategory = newValue;
+                      });
+                    },
+                  ),
+                ),
+                if (isSubscribed) // Only show add button for subscribed users
+                  IconButton(
+                    icon: const Icon(Icons.add),
+                    onPressed: _showAddCategoryDialog,
+                  ),
               ],
             ),
           ],

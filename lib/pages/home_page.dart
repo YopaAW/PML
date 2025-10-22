@@ -3,14 +3,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../providers/reminder_provider.dart';
+import '../providers/category_provider.dart'; // Import category provider
+import '../models/category_model.dart' as app_models; // Import category model
 
 class HomePage extends ConsumerWidget {
   const HomePage({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Tonton provider 'reminderListProvider' yang mengembalikan List<Reminder>.
     final reminders = ref.watch(reminderListProvider);
+    final categoriesAsync = ref.watch(categoryListProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -52,30 +54,52 @@ class HomePage extends ConsumerWidget {
                 context.go('/about');
               },
             ),
+            // Toggle Subscription Status for testing
+            ListTile(
+              leading: Icon(ref.watch(isSubscribedProvider) ? Icons.star : Icons.star_border),
+              title: Text(ref.watch(isSubscribedProvider) ? 'Berlangganan' : 'Gratis'),
+              onTap: () {
+                ref.read(isSubscribedProvider.notifier).state = !ref.read(isSubscribedProvider);
+                Navigator.of(context).pop();
+              },
+            ),
           ],
         ),
       ),
-      body: reminders.isEmpty
-          ? const Center(child: Text('Ketuk + untuk menambah pengingat.'))
-          : ListView.builder(
-              itemCount: reminders.length,
-              itemBuilder: (context, index) {
-                final reminder = reminders[index];
-                final formatted = DateFormat('dd MMM yyyy, HH:mm').format(reminder.eventDate);
-                return ListTile(
-                  title: Text(reminder.title),
-                  subtitle: Text('Jadwal: $formatted'),
-                  trailing: Checkbox(
-                    value: reminder.isCompleted,
-                    onChanged: (value) {
-                      ref
-                          .read(reminderListProvider.notifier)
-                          .toggle(reminder.id);
-                    },
-                  ),
+      body: categoriesAsync.when(
+        data: (categories) {
+          return reminders.isEmpty
+              ? const Center(child: Text('Ketuk + untuk menambah pengingat.'))
+              : ListView.builder(
+                  itemCount: reminders.length,
+                  itemBuilder: (context, index) {
+                    final reminder = reminders[index];
+                    final formattedDate = DateFormat('dd MMM yyyy, HH:mm').format(reminder.eventDate);
+                    final categoryName = categories
+                        .firstWhere(
+                          (cat) => cat.id == reminder.categoryId,
+                          orElse: () => const app_models.Category(id: -1, name: 'Tidak Berkategori'),
+                        )
+                        .name;
+
+                    return ListTile(
+                      title: Text(reminder.title),
+                      subtitle: Text('Jadwal: $formattedDate - Kategori: $categoryName'),
+                      trailing: Checkbox(
+                        value: reminder.isCompleted,
+                        onChanged: (value) {
+                          ref
+                              .read(reminderListProvider.notifier)
+                              .toggleCompletion(reminder.id);
+                        },
+                      ),
+                    );
+                  },
                 );
-              },
-            ),
+        },
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (err, stack) => const Center(child: Text('Error memuat kategori')),
+      ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => context.go('/add'),
         child: const Icon(Icons.add),

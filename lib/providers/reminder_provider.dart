@@ -1,55 +1,44 @@
-// lib/providers/reminder_provider.dart
-
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/reminder_model.dart';
+import '../database_hive.dart'; // Import the Hive database
+import 'category_provider.dart'; // Import category provider
 
 class ReminderListNotifier extends Notifier<List<Reminder>> {
   @override
   List<Reminder> build() {
-    return [
-      Reminder(
-        id: 1,
-        title: 'Rapat tim mingguan',
-        eventDate: DateTime.now().add(const Duration(hours: 2)),
-        isCompleted: false,
-      ),
-      Reminder(
-        id: 2,
-        title: 'Mengerjakan tugas Flutter',
-        eventDate: DateTime.now().add(const Duration(days: 1)),
-        isCompleted: false,
-      ),
-      Reminder(
-        id: 3,
-        title: 'Beli susu',
-        eventDate: DateTime.now().subtract(const Duration(hours: 3)),
-        isCompleted: true,
-      ),
-    ];
+    _loadReminders(); // Load reminders from DB
+    return []; // Initial state, will be updated by _loadReminders
   }
 
-  void addReminder(String title, DateTime eventDate) {
+  Future<void> _loadReminders() async {
+    DatabaseService.watchAllReminders().listen((reminders) {
+      state = reminders;
+    });
+  }
+
+  Future<void> addReminder(String title, DateTime eventDate, {int? categoryId}) async {
     final newReminder = Reminder(
-      id: DateTime.now().millisecondsSinceEpoch,
+      id: 0, // Will be updated by insertReminder
       title: title,
       eventDate: eventDate,
       isCompleted: false,
+      categoryId: categoryId,
     );
-    state = [...state, newReminder];
+    await DatabaseService.insertReminder(newReminder);
   }
 
-  void toggle(int id) {
-    state = [
-      for (final reminder in state)
-        if (reminder.id == id)
-          reminder.copyWith(isCompleted: !reminder.isCompleted)
-        else
-          reminder,
-    ];
+  Future<void> updateReminder(Reminder reminder) async {
+    await DatabaseService.updateReminder(reminder);
   }
 
-  void remove(int id) {
-    state = state.where((reminder) => reminder.id != id).toList();
+  Future<void> toggleCompletion(int id) async {
+    final reminder = state.firstWhere((r) => r.id == id);
+    final updatedReminder = reminder.copyWith(isCompleted: !reminder.isCompleted);
+    await updateReminder(updatedReminder);
+  }
+
+  Future<void> removeReminder(int id) async {
+    await DatabaseService.deleteReminder(id);
   }
 }
 

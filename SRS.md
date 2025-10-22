@@ -5,8 +5,8 @@ Software Requirements Specification (SRS) adalah dokumen yang lebih formal dan t
 Berikut adalah draf SRS untuk aplikasi "Ingat.in".
 
 Software Requirements Specification: Ingat.in
-Versi	Tanggal	Penulis	Status
-1.0	17 September 2025	Gemini & User	Draf Awal
+Versi	Tanggal	        Penulis	        Status
+1.0	17 September 2025	Yopa & Sidra	Draf Awal
 1. Pendahuluan
 1.1 Tujuan
 

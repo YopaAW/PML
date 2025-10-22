@@ -4,9 +4,17 @@ import 'package:go_router/go_router.dart';
 import 'pages/home_page.dart';
 import 'pages/add_edit_page.dart';
 import 'pages/about_page.dart';
+import 'database_hive.dart'; // Import the Hive database
+ // Import category provider for isSubscribedProvider
 
-void main() {
-  runApp(const ProviderScope(child: MyApp()));
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await DatabaseService.init(); // Initialize Hive database
+  runApp(
+    ProviderScope(
+      child: const MyApp(),
+    ),
+  );
 }
 
 final GoRouter _router = GoRouter(
@@ -63,7 +71,7 @@ class MyApp extends StatelessWidget {
           foregroundColor: Colors.white,
         ),
         checkboxTheme: CheckboxThemeData(
-          fillColor: MaterialStatePropertyAll(Colors.deepPurple),
+          fillColor: WidgetStatePropertyAll(Colors.deepPurple),
         ),
         listTileTheme: const ListTileThemeData(
           iconColor: Colors.white,
