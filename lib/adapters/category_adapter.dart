@@ -43,3 +43,4 @@ class CategoryAdapter extends TypeAdapter<Category> {
   @override
   int get hashCode => typeId.hashCode;
 }
+

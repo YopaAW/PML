@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../models/reminder_model.dart';
 import '../providers/reminder_provider.dart';
-import '../providers/category_provider.dart'; // Import category provider
-import '../models/category_model.dart' as app_models; // Import category model
+import '../providers/category_provider.dart';
+import '../providers/subscription_provider.dart';
+import '../services/notification_service.dart';
+import '../models/category_model.dart' as app_models;
 
 class AddEditPage extends ConsumerStatefulWidget {
-  const AddEditPage({super.key});
+  final Reminder? reminder;
+  const AddEditPage({super.key, this.reminder});
 
   @override
   ConsumerState<AddEditPage> createState() => _AddEditPageState();
@@ -14,13 +18,40 @@ class AddEditPage extends ConsumerStatefulWidget {
 
 class _AddEditPageState extends ConsumerState<AddEditPage> {
   final _titleController = TextEditingController();
+  final _descriptionController = TextEditingController();
   DateTime? _selectedDate;
   TimeOfDay? _selectedTime;
-  app_models.Category? _selectedCategory; // New state variable for selected category
+  app_models.Category? _selectedCategory;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.reminder != null) {
+      _titleController.text = widget.reminder!.title;
+      _descriptionController.text = widget.reminder!.description ?? '';
+      _selectedDate = widget.reminder!.eventDate;
+      _selectedTime = TimeOfDay.fromDateTime(widget.reminder!.eventDate);
+      
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          final categories = ref.read(categoryListProvider).asData?.value;
+          if (categories != null && widget.reminder!.categoryId != null) {
+            final matchingCategory = categories.where((cat) => cat.id == widget.reminder!.categoryId);
+            if (matchingCategory.isNotEmpty) {
+              setState(() {
+                _selectedCategory = matchingCategory.first;
+              });
+            }
+          }
+        }
+      });
+    }
+  }
 
   @override
   void dispose() {
     _titleController.dispose();
+    _descriptionController.dispose();
     super.dispose();
   }
 
@@ -41,9 +72,35 @@ class _AddEditPageState extends ConsumerState<AddEditPage> {
       time.minute,
     );
 
-    await ref
-        .read(reminderListProvider.notifier)
-        .addReminder(_titleController.text, eventDate, categoryId: _selectedCategory?.id);
+    if (widget.reminder != null) {
+      final updatedReminder = widget.reminder!.copyWith(
+        title: _titleController.text,
+        description: _descriptionController.text,
+        eventDate: eventDate,
+        categoryId: _selectedCategory?.id,
+      );
+      await ref.read(reminderListProvider.notifier).updateReminder(updatedReminder);
+      if (eventDate.isAfter(DateTime.now())) {
+        await NotificationService().scheduleNotification(
+          updatedReminder.id,
+          updatedReminder.title,
+          updatedReminder.description ?? '',
+          eventDate,
+        );
+      }
+    } else {
+      final newReminder = await ref
+          .read(reminderListProvider.notifier)
+          .addReminder(_titleController.text, eventDate, categoryId: _selectedCategory?.id, description: _descriptionController.text);
+      if (eventDate.isAfter(DateTime.now())) {
+        await NotificationService().scheduleNotification(
+          newReminder.id,
+          newReminder.title,
+          newReminder.description ?? '',
+          eventDate,
+        );
+      }
+    }
 
     if (!mounted) return;
     if (context.canPop()) {
@@ -93,7 +150,7 @@ class _AddEditPageState extends ConsumerState<AddEditPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Pengingat Baru'),
+        title: Text(widget.reminder == null ? 'Pengingat Baru' : 'Edit Pengingat'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () {
@@ -111,145 +168,105 @@ class _AddEditPageState extends ConsumerState<AddEditPage> {
           ),
         ],
       ),
-      drawer: Drawer(
-        child: ListView(
-          padding: EdgeInsets.zero,
-          children: [
-            const DrawerHeader(
-              decoration: BoxDecoration(color: Colors.deepPurple),
-              child: Align(
-                alignment: Alignment.bottomLeft,
-                child: Text('Menu', style: TextStyle(fontSize: 20, color: Colors.white)),
-              ),
-            ),
-            ListTile(
-              leading: const Icon(Icons.home),
-              title: const Text('Ingat.in'),
-              onTap: () {
-                Navigator.of(context).pop();
-                context.go('/');
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.add),
-              title: const Text('Tambah'),
-              onTap: () {
-                Navigator.of(context).pop();
-                context.go('/add');
-              },
-            ),
-            const Divider(),
-            ListTile(
-              leading: const Icon(Icons.info_outline),
-              title: const Text('About'),
-              onTap: () {
-                Navigator.of(context).pop();
-                context.go('/about');
-              },
-            ),
-            // Toggle Subscription Status for testing
-            ListTile(
-              leading: Icon(isSubscribed ? Icons.star : Icons.star_border),
-              title: Text(isSubscribed ? 'Berlangganan' : 'Gratis'),
-              onTap: () {
-                ref.read(isSubscribedProvider.notifier).state = !isSubscribed;
-                Navigator.of(context).pop();
-              },
-            ),
-          ],
-        ),
-      ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            TextField(
-              controller: _titleController,
-              decoration: const InputDecoration(labelText: 'Judul'),
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    _selectedDate == null
-                        ? 'Pilih Tanggal'
-                        : 'Tanggal: ${_selectedDate!.toLocal().toString().split(' ')[0]}',
+        child: SingleChildScrollView(
+          child: Column(
+            children: [
+              TextField(
+                controller: _titleController,
+                decoration: const InputDecoration(labelText: 'Judul'),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: DropdownButtonFormField<app_models.Category>(
+                      value: _selectedCategory,
+                      decoration: const InputDecoration(labelText: 'Kategori'),
+                      hint: Text('Pilih Kategori (${availableCategories.length} tersedia)'),
+                      items: availableCategories.map((category) {
+                        return DropdownMenuItem<app_models.Category>(
+                          value: category,
+                          child: Text(category.name),
+                        );
+                      }).toList(),
+                      onChanged: (app_models.Category? newValue) {
+                        setState(() {
+                          _selectedCategory = newValue;
+                        });
+                      },
+                    ),
                   ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.calendar_today),
-                  onPressed: () async {
-                    final date = await showDatePicker(
-                      context: context,
-                      initialDate: DateTime.now(),
-                      firstDate: DateTime.now(),
-                      lastDate: DateTime(2100),
-                    );
-                    if (date != null) {
-                      setState(() {
-                        _selectedDate = date;
-                      });
-                    }
-                  },
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    _selectedTime == null
-                        ? 'Pilih Waktu'
-                        : 'Waktu: ${_selectedTime!.format(context)}',
+                  if (isSubscribed)
+                    IconButton(
+                      icon: const Icon(Icons.add),
+                      onPressed: _showAddCategoryDialog,
+                    ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      _selectedDate == null
+                          ? 'Pilih Tanggal'
+                          : 'Tanggal: ${_selectedDate!.toLocal().toString().split(' ')[0]}',
+                    ),
                   ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.access_time),
-                  onPressed: () async {
-                    final time = await showTimePicker(
-                      context: context,
-                      initialTime: TimeOfDay.now(),
-                    );
-                    if (time != null) {
-                      setState(() {
-                        _selectedTime = time;
-                      });
-                    }
-                  },
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: DropdownButtonFormField<app_models.Category>(
-                    value: _selectedCategory,
-                    decoration: const InputDecoration(labelText: 'Kategori'),
-                    hint: Text('Pilih Kategori (${availableCategories.length} tersedia)'),
-                    items: availableCategories.map((category) {
-                      return DropdownMenuItem<app_models.Category>(
-                        value: category,
-                        child: Text(category.name),
+                  IconButton(
+                    icon: const Icon(Icons.calendar_today),
+                    onPressed: () async {
+                      final date = await showDatePicker(
+                        context: context,
+                        initialDate: _selectedDate ?? DateTime.now(),
+                        firstDate: DateTime(2000),
+                        lastDate: DateTime(2100),
                       );
-                    }).toList(),
-                    onChanged: (app_models.Category? newValue) {
-                      setState(() {
-                        _selectedCategory = newValue;
-                      });
+                      if (date != null) {
+                        setState(() {
+                          _selectedDate = date;
+                        });
+                      }
                     },
                   ),
-                ),
-                if (isSubscribed) // Only show add button for subscribed users
-                  IconButton(
-                    icon: const Icon(Icons.add),
-                    onPressed: _showAddCategoryDialog,
+                ],
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      _selectedTime == null
+                          ? 'Pilih Waktu'
+                          : 'Waktu: ${_selectedTime!.format(context)}',
+                    ),
                   ),
-              ],
-            ),
-          ],
+                  IconButton(
+                    icon: const Icon(Icons.access_time),
+                    onPressed: () async {
+                      final time = await showTimePicker(
+                        context: context,
+                        initialTime: _selectedTime ?? TimeOfDay.now(),
+                      );
+                      if (time != null) {
+                        setState(() {
+                          _selectedTime = time;
+                        });
+                      }
+                    },
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: _descriptionController,
+                decoration: const InputDecoration(labelText: 'Keterangan'),
+                maxLines: 3,
+              ),
+            ],
+          ),
         ),
       ),
     );

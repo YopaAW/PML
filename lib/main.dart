@@ -1,14 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'models/reminder_model.dart';
 import 'pages/home_page.dart';
 import 'pages/add_edit_page.dart';
 import 'pages/about_page.dart';
+import 'pages/manage_categories_page.dart';
+import 'pages/donation_page.dart';
+import 'pages/subscription_page.dart';
 import 'database_hive.dart'; // Import the Hive database
- // Import category provider for isSubscribedProvider
+import 'services/notification_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  final notificationService = NotificationService();
+  await notificationService.init();
+  await notificationService.requestPermissions();
   await DatabaseService.init(); // Initialize Hive database
   runApp(
     ProviderScope(
@@ -26,11 +33,26 @@ final GoRouter _router = GoRouter(
     ),
     GoRoute(
       path: '/add',
-      builder: (context, state) => const AddEditPage(),
+      builder: (context, state) {
+        final reminder = state.extra as Reminder?;
+        return AddEditPage(reminder: reminder);
+      },
     ),
     GoRoute(
       path: '/about',
       builder: (context, state) => const AboutPage(),
+    ),
+    GoRoute(
+      path: '/categories',
+      builder: (context, state) => const ManageCategoriesPage(),
+    ),
+    GoRoute(
+      path: '/donation',
+      builder: (context, state) => const DonationPage(),
+    ),
+    GoRoute(
+      path: '/subscription',
+      builder: (context, state) => const SubscriptionPage(),
     ),
     // TODO: Tambahkan rute '/edit/:id' jika diperlukan
   ],
@@ -44,37 +66,21 @@ class MyApp extends StatelessWidget {
     return MaterialApp.router(
       title: 'Ingat.in',
       debugShowCheckedModeBanner: false,
-      themeMode: ThemeMode.dark,
+      themeMode: ThemeMode.light,
       theme: ThemeData(
         useMaterial3: true,
         colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.deepPurple,
+          seedColor: Colors.blue,
           brightness: Brightness.light,
         ),
+        scaffoldBackgroundColor: Colors.white,
       ),
       darkTheme: ThemeData(
         useMaterial3: true,
         brightness: Brightness.dark,
         colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.deepPurple,
+          seedColor: Colors.blue,
           brightness: Brightness.dark,
-        ),
-        scaffoldBackgroundColor: const Color(0xFF0F0F10),
-        appBarTheme: const AppBarTheme(
-          backgroundColor: Colors.transparent,
-          surfaceTintColor: Colors.transparent,
-          elevation: 0,
-          centerTitle: false,
-        ),
-        floatingActionButtonTheme: const FloatingActionButtonThemeData(
-          backgroundColor: Colors.deepPurple,
-          foregroundColor: Colors.white,
-        ),
-        checkboxTheme: CheckboxThemeData(
-          fillColor: WidgetStatePropertyAll(Colors.deepPurple),
-        ),
-        listTileTheme: const ListTileThemeData(
-          iconColor: Colors.white,
         ),
       ),
       routerConfig: _router,

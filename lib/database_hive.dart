@@ -72,11 +72,11 @@ class DatabaseService {
     return _remindersBox.get(id);
   }
   
-  static Future<int> insertReminder(Reminder reminder) async {
+  static Future<Reminder> insertReminder(Reminder reminder) async {
     final id = await _remindersBox.add(reminder);
     final updatedReminder = reminder.copyWith(id: id);
     await _remindersBox.put(id, updatedReminder);
-    return id;
+    return updatedReminder;
   }
   
   static Future<bool> updateReminder(Reminder reminder) async {

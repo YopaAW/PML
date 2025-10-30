@@ -33,6 +33,12 @@ class AboutPage extends StatelessWidget {
             Text('Aplikasi sederhana untuk mencatat pengingat kegiatan Anda.'),
             SizedBox(height: 16),
             Text('Versi 1.0.0'),
+            const SizedBox(height: 16),
+            const Text('Dibuat oleh:'),
+            const Text(
+              'Yopa Arian Widodo',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
           ],
         ),
       ),

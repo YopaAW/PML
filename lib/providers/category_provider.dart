@@ -2,9 +2,9 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/category_model.dart' as app_models;
 import '../database_hive.dart'; // Import the Hive database
+import 'subscription_provider.dart';
 
 // Simulate subscription status
-final isSubscribedProvider = StateProvider<bool>((ref) => false); // Default to false (free user)
 
 class CategoryNotifier extends AsyncNotifier<List<app_models.Category>> {
   @override
@@ -34,6 +34,10 @@ class CategoryNotifier extends AsyncNotifier<List<app_models.Category>> {
       isPremium: false, // Custom categories are not premium content
     );
     await DatabaseService.insertCategory(newCategory);
+  }
+
+  Future<void> updateCategory(app_models.Category category) async {
+    await DatabaseService.updateCategory(category);
   }
 
   Future<void> deleteCategory(int id) async {

@@ -13,6 +13,8 @@ class Reminder {
   final bool isCompleted;
   @HiveField(4)
   final int? categoryId;
+  @HiveField(5)
+  final String? description;
 
   const Reminder({
     required this.id,
@@ -20,21 +22,24 @@ class Reminder {
     required this.eventDate,
     required this.isCompleted,
     this.categoryId,
+    this.description,
   });
 
   Reminder copyWith({
     int? id,
     String? title,
+    String? description,
     DateTime? eventDate,
     bool? isCompleted,
-    ValueGetter<int?>? categoryId,
+    int? categoryId,
   }) {
     return Reminder(
       id: id ?? this.id,
       title: title ?? this.title,
+      description: description ?? this.description,
       eventDate: eventDate ?? this.eventDate,
       isCompleted: isCompleted ?? this.isCompleted,
-      categoryId: categoryId != null ? categoryId() : this.categoryId,
+      categoryId: categoryId ?? this.categoryId,
     );
   }
 
@@ -42,6 +47,7 @@ class Reminder {
     return Reminder(
       id: json['id'] as int,
       title: json['title'] as String,
+      description: json['description'] as String?,
       eventDate: DateTime.parse(json['eventDate'] as String),
       isCompleted: json['isCompleted'] as bool,
       categoryId: json['categoryId'] as int?,
@@ -52,6 +58,7 @@ class Reminder {
     return {
       'id': id,
       'title': title,
+      'description': description,
       'eventDate': eventDate.toIso8601String(),
       'isCompleted': isCompleted,
       'categoryId': categoryId,
@@ -65,6 +72,7 @@ class Reminder {
     return other is Reminder &&
         other.id == id &&
         other.title == title &&
+        other.description == description &&
         other.eventDate == eventDate &&
         other.isCompleted == isCompleted &&
         other.categoryId == categoryId;
@@ -74,6 +82,7 @@ class Reminder {
   int get hashCode {
     return id.hashCode ^
         title.hashCode ^
+        description.hashCode ^
         eventDate.hashCode ^
         isCompleted.hashCode ^
         categoryId.hashCode;
