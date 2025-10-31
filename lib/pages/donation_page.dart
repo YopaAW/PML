@@ -6,46 +6,45 @@ class DonationPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(
         title: const Text('Dukung Developer'),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-            if (context.canPop()) {
-              context.pop();
-            } else {
-              context.go('/');
-            }
-          },
+          icon: const Icon(Icons.arrow_back_ios_new_rounded),
+          onPressed: () => context.go('/'),
         ),
       ),
-      body: Padding(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Suka dengan aplikasi Ingat.in?',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
-            const Text('Dukung developer untuk terus mengembangkan aplikasi ini dengan memberikan donasi.'),
+            Text(
+              'Dukung developer untuk terus mengembangkan aplikasi ini dengan memberikan donasi.',
+              style: theme.textTheme.bodyLarge,
+            ),
             const SizedBox(height: 24),
-            const Text(
+            Text(
               'Pilih jumlah donasi:',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              style: theme.textTheme.titleLarge,
             ),
             const SizedBox(height: 16),
             Wrap(
-              spacing: 16,
-              runSpacing: 16,
+              spacing: 12.0, // Horizontal space between chips
+              runSpacing: 12.0, // Vertical space between lines
               children: [
                 _buildDonationButton(context, 'Rp 1.000'),
                 _buildDonationButton(context, 'Rp 5.000'),
                 _buildDonationButton(context, 'Rp 10.000'),
                 _buildDonationButton(context, 'Rp 20.000'),
                 _buildDonationButton(context, 'Rp 50.000'),
+                _buildDonationButton(context, 'Lainnya'),
               ],
             ),
           ],
@@ -55,11 +54,52 @@ class DonationPage extends StatelessWidget {
   }
 
   Widget _buildDonationButton(BuildContext context, String amount) {
-    return ElevatedButton(
+    final theme = Theme.of(context);
+    return ActionChip(
       onPressed: () {
-        _showDonationConfirmationDialog(context, amount);
+        if (amount == 'Lainnya') {
+          _showCustomDonationDialog(context);
+        } else {
+          _showDonationConfirmationDialog(context, amount);
+        }
       },
-      child: Text(amount),
+      label: Text(amount, style: theme.textTheme.titleMedium),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      backgroundColor: theme.colorScheme.primary.withOpacity(0.1),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: theme.colorScheme.primary, width: 1),
+      ),
+    );
+  }
+
+  Future<void> _showCustomDonationDialog(BuildContext context) async {
+    final customAmountController = TextEditingController();
+    return showDialog<void>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Masukkan Jumlah Donasi'),
+          content: TextField(
+            controller: customAmountController,
+            keyboardType: TextInputType.number,
+            decoration: const InputDecoration(hintText: 'Contoh: 30000'),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Batal'),
+              onPressed: () => Navigator.of(context).pop(),
+            ),
+            ElevatedButton(
+              child: const Text('Donasi'),
+              onPressed: () {
+                Navigator.of(context).pop();
+                _showDonationConfirmationDialog(context, 'Rp ${customAmountController.text}');
+              },
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -73,11 +113,9 @@ class DonationPage extends StatelessWidget {
           actions: <Widget>[
             TextButton(
               child: const Text('Tidak'),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
+              onPressed: () => Navigator.of(context).pop(),
             ),
-            TextButton(
+            ElevatedButton(
               child: const Text('Iya'),
               onPressed: () {
                 Navigator.of(context).pop();

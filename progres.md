@@ -2,7 +2,7 @@
 
 ## Ringkasan
 
-- **Estimasi Progress Keseluruhan: 100%
+- **Estimasi Progress Keseluruhan: 100%**
 
 ---
 
@@ -51,12 +51,9 @@
 - [x] **Notifikasi Pengingat** - 100%
   - Aplikasi akan menampilkan notifikasi saat tanggal dan jam pengingat tercapai.
 
----
-
-## Fitur dalam Pengerjaan
-
-
----
-
-## Fitur yang Direncanakan
-
+- [x] **Perbaikan UI/UX Menyeluruh** - 100%
+  - Mendesain ulang antarmuka agar lebih modern dan menarik.
+  - Meningkatkan pengalaman pengguna agar lebih intuitif.
+  - Redesain halaman donasi untuk tampilan yang lebih estetik dan responsif.
+  - Implementasi mode gelap/terang (dark/light mode) yang dapat diubah oleh pengguna.
+  - Implementasi kustomisasi warna UI/UX dengan pratinjau langsung.

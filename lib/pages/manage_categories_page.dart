@@ -1,127 +1,80 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../providers/category_provider.dart';
 import '../providers/subscription_provider.dart';
+import '../providers/remaining_time_provider.dart';
 import '../models/category_model.dart' as app_models;
 
-class ManageCategoriesPage extends ConsumerStatefulWidget {
+class ManageCategoriesPage extends ConsumerWidget {
   const ManageCategoriesPage({super.key});
 
   @override
-  ConsumerState<ManageCategoriesPage> createState() => _ManageCategoriesPageState();
-}
-
-class _ManageCategoriesPageState extends ConsumerState<ManageCategoriesPage> {
-  Timer? _timer;
-  String _remainingTime = '';
-
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _startTimer();
-    });
-  }
-
-  @override
-  void dispose() {
-    _timer?.cancel();
-    super.dispose();
-  }
-
-  void _startTimer() {
-    final subscriptionEndDate = ref.read(subscriptionEndDateProvider);
-    if (subscriptionEndDate != null && subscriptionEndDate.year != 9999) {
-      _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-        final now = DateTime.now();
-        if (subscriptionEndDate.isAfter(now)) {
-          final remaining = subscriptionEndDate.difference(now);
-          if (mounted) {
-            setState(() {
-              _remainingTime = _formatDuration(remaining);
-            });
-          }
-        } else {
-          if (mounted) {
-            setState(() {
-              _remainingTime = 'Langganan telah berakhir';
-            });
-          }
-          _timer?.cancel();
-        }
-      });
-    }
-  }
-
-  String _formatDuration(Duration duration) {
-    String twoDigits(int n) => n.toString().padLeft(2, '0');
-    final days = duration.inDays;
-    final hours = twoDigits(duration.inHours.remainder(24));
-    final minutes = twoDigits(duration.inMinutes.remainder(60));
-    final seconds = twoDigits(duration.inSeconds.remainder(60));
-    return '$days hari, $hours:$minutes:$seconds';
-  }
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final isSubscribed = ref.watch(isSubscribedProvider);
     final categoriesAsync = ref.watch(categoryListProvider);
-    final subscriptionEndDate = ref.watch(subscriptionEndDateProvider);
+    final remainingTimeAsync = ref.watch(remainingTimeProvider);
+    final theme = Theme.of(context);
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Kelola Kategori'),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-            if (context.canPop()) {
-              context.pop();
-            } else {
-              context.go('/');
-            }
-          },
+          icon: const Icon(Icons.arrow_back_ios_new_rounded),
+          onPressed: () => context.go('/'),
         ),
       ),
       body: isSubscribed
           ? Column(
               children: [
-                Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Status Langganan:', style: Theme.of(context).textTheme.titleLarge),
-                      const SizedBox(height: 8),
-                      subscriptionEndDate!.year == 9999
-                          ? const Text('Premium Selamanya')
-                          : Text(_remainingTime),
-                    ],
+                Card(
+                  margin: const EdgeInsets.all(16),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Status Langganan', style: theme.textTheme.titleLarge),
+                        const SizedBox(height: 8),
+                        remainingTimeAsync.when(
+                          data: (time) => Text(time, style: theme.textTheme.bodyLarge),
+                          loading: () => const CircularProgressIndicator(),
+                          error: (err, stack) => Text('Error: $err', style: theme.textTheme.bodyLarge),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-                const Divider(),
+                const Divider(height: 1),
                 Expanded(
                   child: categoriesAsync.when(
                     data: (categories) {
+                      if (categories.isEmpty) {
+                        return const Center(
+                          child: Text('Belum ada kategori kustom.'),
+                        );
+                      }
                       return ListView.builder(
                         itemCount: categories.length,
                         itemBuilder: (context, index) {
                           final category = categories[index];
-                          return ListTile(
-                            title: Text(category.name),
-                            trailing: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                IconButton(
-                                  icon: const Icon(Icons.edit),
-                                  onPressed: () => _showAddEditCategoryDialog(context, ref, category: category),
-                                ),
-                                IconButton(
-                                  icon: const Icon(Icons.delete),
-                                  onPressed: () => _showDeleteConfirmationDialog(context, ref, category),
-                                ),
-                              ],
+                          return Card(
+                            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            child: ListTile(
+                              title: Text(category.name, style: theme.textTheme.bodyLarge),
+                              trailing: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  IconButton(
+                                    icon: Icon(Icons.edit_rounded, color: theme.colorScheme.primary),
+                                    onPressed: () => _showAddEditCategoryDialog(context, ref, category: category),
+                                  ),
+                                  IconButton(
+                                    icon: Icon(Icons.delete_rounded, color: theme.colorScheme.error),
+                                    onPressed: () => _showDeleteConfirmationDialog(context, ref, category),
+                                  ),
+                                ],
+                              ),
                             ),
                           );
                         },
@@ -134,16 +87,31 @@ class _ManageCategoriesPageState extends ConsumerState<ManageCategoriesPage> {
               ],
             )
           : Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Text('Fitur ini hanya tersedia untuk pengguna premium.'),
-                  const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: () => context.go('/subscription'),
-                    child: const Text('Berlangganan Sekarang'),
-                  ),
-                ],
+              child: Padding(
+                padding: const EdgeInsets.all(20.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.lock_outline_rounded, size: 100, color: theme.disabledColor),
+                    const SizedBox(height: 20),
+                    Text(
+                      'Fitur ini hanya untuk pengguna premium.',
+                      style: theme.textTheme.headlineSmall,
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      'Dengan berlangganan, Anda dapat membuat, mengedit, dan menghapus kategori Anda sendiri.',
+                      style: theme.textTheme.bodyLarge,
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 24),
+                    ElevatedButton(
+                      onPressed: () => context.go('/subscription'),
+                      child: const Text('Berlangganan Sekarang'),
+                    ),
+                  ],
+                ),
               ),
             ),
       floatingActionButton: isSubscribed
@@ -161,7 +129,7 @@ class _ManageCategoriesPageState extends ConsumerState<ManageCategoriesPage> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text(category == null ? 'Tambah Kategori Baru' : 'Edit Kategori'),
+          title: Text(category == null ? 'Tambah Kategori' : 'Edit Kategori'),
           content: TextField(
             controller: newCategoryNameController,
             decoration: const InputDecoration(hintText: 'Nama Kategori'),
@@ -169,11 +137,9 @@ class _ManageCategoriesPageState extends ConsumerState<ManageCategoriesPage> {
           actions: <Widget>[
             TextButton(
               child: const Text('Batal'),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
+              onPressed: () => Navigator.of(context).pop(),
             ),
-            TextButton(
+            ElevatedButton(
               child: const Text('Simpan'),
               onPressed: () async {
                 if (newCategoryNameController.text.isNotEmpty) {
@@ -203,11 +169,10 @@ class _ManageCategoriesPageState extends ConsumerState<ManageCategoriesPage> {
           actions: <Widget>[
             TextButton(
               child: const Text('Batal'),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
+              onPressed: () => Navigator.of(context).pop(),
             ),
-            TextButton(
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.error),
               child: const Text('Hapus'),
               onPressed: () async {
                 await ref.read(categoryListProvider.notifier).deleteCategory(category.id);

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import '../models/reminder_model.dart';
 import '../providers/reminder_provider.dart';
 import '../providers/category_provider.dart';
@@ -17,6 +18,7 @@ class AddEditPage extends ConsumerStatefulWidget {
 }
 
 class _AddEditPageState extends ConsumerState<AddEditPage> {
+  final _formKey = GlobalKey<FormState>();
   final _titleController = TextEditingController();
   final _descriptionController = TextEditingController();
   DateTime? _selectedDate;
@@ -56,57 +58,52 @@ class _AddEditPageState extends ConsumerState<AddEditPage> {
   }
 
   void _saveReminder() async {
-    if (_titleController.text.isEmpty || _selectedDate == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Judul dan tanggal harus diisi!')),
+    if (_formKey.currentState!.validate() && _selectedDate != null) {
+      final time = _selectedTime ?? TimeOfDay.now();
+      final eventDate = DateTime(
+        _selectedDate!.year,
+        _selectedDate!.month,
+        _selectedDate!.day,
+        time.hour,
+        time.minute,
       );
-      return;
-    }
 
-    final time = _selectedTime ?? TimeOfDay.now();
-    final eventDate = DateTime(
-      _selectedDate!.year,
-      _selectedDate!.month,
-      _selectedDate!.day,
-      time.hour,
-      time.minute,
-    );
-
-    if (widget.reminder != null) {
-      final updatedReminder = widget.reminder!.copyWith(
-        title: _titleController.text,
-        description: _descriptionController.text,
-        eventDate: eventDate,
-        categoryId: _selectedCategory?.id,
-      );
-      await ref.read(reminderListProvider.notifier).updateReminder(updatedReminder);
-      if (eventDate.isAfter(DateTime.now())) {
-        await NotificationService().scheduleNotification(
-          updatedReminder.id,
-          updatedReminder.title,
-          updatedReminder.description ?? '',
-          eventDate,
+      if (widget.reminder != null) {
+        final updatedReminder = widget.reminder!.copyWith(
+          title: _titleController.text,
+          description: _descriptionController.text,
+          eventDate: eventDate,
+          categoryId: _selectedCategory?.id,
         );
+        await ref.read(reminderListProvider.notifier).updateReminder(updatedReminder);
+        if (eventDate.isAfter(DateTime.now())) {
+          await NotificationService().scheduleNotification(
+            updatedReminder.id,
+            updatedReminder.title,
+            updatedReminder.description ?? '',
+            eventDate,
+          );
+        }
+      } else {
+        final newReminder = await ref
+            .read(reminderListProvider.notifier)
+            .addReminder(_titleController.text, eventDate, categoryId: _selectedCategory?.id, description: _descriptionController.text);
+        if (eventDate.isAfter(DateTime.now())) {
+          await NotificationService().scheduleNotification(
+            newReminder.id,
+            newReminder.title,
+            newReminder.description ?? '',
+            eventDate,
+          );
+        }
       }
-    } else {
-      final newReminder = await ref
-          .read(reminderListProvider.notifier)
-          .addReminder(_titleController.text, eventDate, categoryId: _selectedCategory?.id, description: _descriptionController.text);
-      if (eventDate.isAfter(DateTime.now())) {
-        await NotificationService().scheduleNotification(
-          newReminder.id,
-          newReminder.title,
-          newReminder.description ?? '',
-          eventDate,
-        );
-      }
-    }
 
-    if (!mounted) return;
-    if (context.canPop()) {
-      context.pop();
-    } else {
+      if (!mounted) return;
       context.go('/');
+    } else if (_selectedDate == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Tanggal harus diisi!')),
+      );
     }
   }
 
@@ -124,9 +121,7 @@ class _AddEditPageState extends ConsumerState<AddEditPage> {
           actions: <Widget>[
             TextButton(
               child: const Text('Batal'),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
+              onPressed: () => Navigator.of(context).pop(),
             ),
             TextButton(
               child: const Text('Tambah'),
@@ -147,37 +142,35 @@ class _AddEditPageState extends ConsumerState<AddEditPage> {
   Widget build(BuildContext context) {
     final availableCategories = ref.watch(availableCategoriesProvider);
     final isSubscribed = ref.watch(isSubscribedProvider);
+    final theme = Theme.of(context);
 
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.reminder == null ? 'Pengingat Baru' : 'Edit Pengingat'),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-            if (context.canPop()) {
-              context.pop();
-            } else {
-              context.go('/');
-            }
-          },
+          icon: const Icon(Icons.arrow_back_ios_new_rounded),
+          onPressed: () => context.go('/'),
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.save),
+            icon: const Icon(Icons.save_alt_rounded, size: 28),
             onPressed: _saveReminder,
           ),
         ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: SingleChildScrollView(
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(20.0),
+        child: Form(
+          key: _formKey,
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              TextField(
+              TextFormField(
                 controller: _titleController,
                 decoration: const InputDecoration(labelText: 'Judul'),
+                validator: (value) => value!.isEmpty ? 'Judul tidak boleh kosong' : null,
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 20),
               Row(
                 children: [
                   Expanded(
@@ -200,75 +193,94 @@ class _AddEditPageState extends ConsumerState<AddEditPage> {
                   ),
                   if (isSubscribed)
                     IconButton(
-                      icon: const Icon(Icons.add),
+                      icon: Icon(Icons.add_circle, color: theme.colorScheme.primary),
                       onPressed: _showAddCategoryDialog,
                     ),
                 ],
               ),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      _selectedDate == null
-                          ? 'Pilih Tanggal'
-                          : 'Tanggal: ${_selectedDate!.toLocal().toString().split(' ')[0]}',
-                    ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.calendar_today),
-                    onPressed: () async {
-                      final date = await showDatePicker(
-                        context: context,
-                        initialDate: _selectedDate ?? DateTime.now(),
-                        firstDate: DateTime(2000),
-                        lastDate: DateTime(2100),
-                      );
-                      if (date != null) {
-                        setState(() {
-                          _selectedDate = date;
-                        });
-                      }
-                    },
-                  ),
-                ],
+              const SizedBox(height: 20),
+              _buildDateTimePicker(
+                context: context,
+                label: 'Tanggal',
+                value: _selectedDate != null ? DateFormat('d MMMM yyyy').format(_selectedDate!) : 'Pilih Tanggal',
+                icon: Icons.calendar_today_rounded,
+                onTap: () async {
+                  final date = await showDatePicker(
+                    context: context,
+                    initialDate: _selectedDate ?? DateTime.now(),
+                    firstDate: DateTime(2000),
+                    lastDate: DateTime(2100),
+                  );
+                  if (date != null) {
+                    setState(() {
+                      _selectedDate = date;
+                    });
+                  }
+                },
               ),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      _selectedTime == null
-                          ? 'Pilih Waktu'
-                          : 'Waktu: ${_selectedTime!.format(context)}',
-                    ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.access_time),
-                    onPressed: () async {
-                      final time = await showTimePicker(
-                        context: context,
-                        initialTime: _selectedTime ?? TimeOfDay.now(),
-                      );
-                      if (time != null) {
-                        setState(() {
-                          _selectedTime = time;
-                        });
-                      }
-                    },
-                  ),
-                ],
+              const SizedBox(height: 20),
+              _buildDateTimePicker(
+                context: context,
+                label: 'Waktu',
+                value: _selectedTime != null ? _selectedTime!.format(context) : 'Pilih Waktu',
+                icon: Icons.access_time_filled_rounded,
+                onTap: () async {
+                  final time = await showTimePicker(
+                    context: context,
+                    initialTime: _selectedTime ?? TimeOfDay.now(),
+                  );
+                  if (time != null) {
+                    setState(() {
+                      _selectedTime = time;
+                    });
+                  }
+                },
               ),
-              const SizedBox(height: 16),
-              TextField(
+              const SizedBox(height: 20),
+              TextFormField(
                 controller: _descriptionController,
                 decoration: const InputDecoration(labelText: 'Keterangan'),
-                maxLines: 3,
+                maxLines: 4,
               ),
             ],
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildDateTimePicker({
+    required BuildContext context,
+    required String label,
+    required String value,
+    required IconData icon,
+    required VoidCallback onTap,
+  }) {
+    final theme = Theme.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: theme.textTheme.labelLarge?.copyWith(color: theme.hintColor)),
+        const SizedBox(height: 8),
+        InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(12),
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+            decoration: BoxDecoration(
+              color: theme.inputDecorationTheme.fillColor,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              children: [
+                Icon(icon, color: theme.colorScheme.primary),
+                const SizedBox(width: 12),
+                Text(value, style: theme.textTheme.bodyLarge),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

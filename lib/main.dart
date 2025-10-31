@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import 'package:ingatin/theme.dart';
+import 'package:ingatin/providers/theme_provider.dart';
+import 'package:ingatin/providers/color_palette_provider.dart';
 import 'models/reminder_model.dart';
 import 'pages/home_page.dart';
 import 'pages/add_edit_page.dart';
@@ -17,6 +21,7 @@ void main() async {
   await notificationService.init();
   await notificationService.requestPermissions();
   await DatabaseService.init(); // Initialize Hive database
+  await Hive.openBox('settings'); // Open settings box
   runApp(
     ProviderScope(
       child: const MyApp(),
@@ -58,31 +63,19 @@ final GoRouter _router = GoRouter(
   ],
 );
 
-class MyApp extends StatelessWidget {
+class MyApp extends ConsumerWidget {
   const MyApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final themeMode = ref.watch(themeModeProvider);
+    final colorPalette = ref.watch(colorPaletteProvider);
     return MaterialApp.router(
       title: 'Ingat.in',
       debugShowCheckedModeBanner: false,
-      themeMode: ThemeMode.light,
-      theme: ThemeData(
-        useMaterial3: true,
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.blue,
-          brightness: Brightness.light,
-        ),
-        scaffoldBackgroundColor: Colors.white,
-      ),
-      darkTheme: ThemeData(
-        useMaterial3: true,
-        brightness: Brightness.dark,
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.blue,
-          brightness: Brightness.dark,
-        ),
-      ),
+      theme: AppTheme.lightTheme(colorPalette),
+      darkTheme: AppTheme.darkTheme(colorPalette),
+      themeMode: themeMode,
       routerConfig: _router,
     );
   }
