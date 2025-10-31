@@ -1,47 +1,72 @@
 # Product Requirements Document (PRD) - Ingat.in
 
-## 1. Pengelolaan Pengingat
+## 1. Apa itu Ingat.in?
 
--   **Fungsionalitas Dasar:**
-    -   Pengguna dapat membuat pengingat baru dengan judul, deskripsi opsional, tanggal, waktu, dan kategori.
-    -   Pengguna dapat melihat daftar semua pengingat yang telah dibuat di halaman utama.
-    -   Pengguna dapat menandai pengingat sebagai 'selesai' melalui checkbox.
-    -   Pengguna dapat mengedit detail pengingat yang sudah ada.
-    -   Pengguna dapat menghapus pengingat yang sudah ada.
+Ingat.in adalah aplikasi mobile yang dirancang untuk membantu pengguna mengelola pengingat harian mereka dengan mudah dan efisien. Aplikasi ini memungkinkan pengguna untuk membuat, mengatur, dan melacak tugas-tugas penting melalui antarmuka yang sederhana dan intuitif. Dengan fitur notifikasi yang andal, Ingat.in memastikan tidak ada lagi tenggat waktu atau acara penting yang terlewat.
 
--   **Notifikasi Pengingat:**
-    -   Aplikasi akan menampilkan notifikasi pada perangkat pengguna saat tanggal dan waktu pengingat yang ditentukan tercapai.
+## 2. Fitur Aplikasi
 
-## 2. Pengelolaan Kategori
+### 2.1 Fitur Gratis
 
--   **Kategori Default:** Aplikasi menyediakan kategori-kategori default (Pribadi, Kerja, Kesehatan, Belanja) yang dapat digunakan oleh semua pengguna.
--   **Manajemen Kategori Kustom (Fitur Premium):**
-    -   Pengguna premium dapat membuat, mengedit, dan menghapus kategori kustom mereka sendiri.
-    -   Pengguna dapat mengelola kategori dari halaman 'Kelola Kategori'.
-    -   Perubahan pada kategori (tambah/edit/hapus) akan secara otomatis diperbarui di seluruh aplikasi.
+- **Pengelolaan Pengingat:**
+    - Membuat, mengedit, dan menghapus pengingat dengan judul, deskripsi, tanggal, dan waktu.
+    - Menandai pengingat sebagai 'selesai'.
+    - Melihat daftar semua pengingat.
+- **Notifikasi:**
+    - Menerima notifikasi real-time untuk setiap pengingat.
+- **Kategori Dasar:**
+    - Menggunakan kategori default (Pribadi, Kerja, Kesehatan, Belanja) untuk mengorganisir pengingat.
+- **Filter Pengingat:**
+    - Memfilter pengingat berdasarkan bulan dan kategori.
+- **Donasi:**
+    - Opsi untuk memberikan donasi sukarela kepada pengembang.
 
-## 3. Filter Pengingat
+### 2.2 Fitur Premium (Berbayar)
 
--   **Filter Berdasarkan Bulan:** Pengguna dapat memfilter daftar pengingat berdasarkan bulan tertentu.
--   **Filter Berdasarkan Kategori:** Pengguna dapat memfilter daftar pengingat berdasarkan kategori yang dipilih.
--   **Pembaruan Otomatis Filter:** Menu filter kategori akan diperbarui secara otomatis, mencerminkan kategori yang tersedia (termasuk kustom).
+- **Manajemen Kategori Kustom:**
+    - Membuat, mengedit, dan menghapus kategori sesuai kebutuhan pribadi.
+- **Sinkronisasi Antar Perangkat:**
+    - Menyinkronkan semua pengingat dan kategori di berbagai perangkat.
+- **Tema Kustom:**
+    - Mengubah tampilan aplikasi dengan berbagai pilihan tema eksklusif.
+- **Backup & Restore Data:**
+    - Mencadangkan dan memulihkan data pengingat dengan aman.
 
-## 4. Fitur Akun dan Monetisasi
+## 3. Siapa yang Akan Menggunakan?
 
--   **Fitur Premium (Berlangganan):**
-    -   Pengguna dapat berlangganan untuk membuka fitur premium seperti pengelolaan kategori kustom.
-    -   Tersedia opsi langganan:
-        -   Tahunan: Rp 15.000
-        -   2 Tahun: Rp 25.000
-        -   Selamanya: Rp 50.000
-    -   Jika pengguna memiliki langganan aktif dan membeli paket lain (non-lifetime), durasi baru akan ditambahkan ke durasi yang sudah ada.
-    -   Pembelian langganan 'Selamanya' akan langsung mengaktifkan langganan selamanya, menggantikan langganan aktif sebelumnya.
-    -   Sisa durasi langganan akan ditampilkan secara real-time di halaman terkait.
--   **Fitur Donasi:**
-    -   Pengguna dapat memberikan donasi kepada pengembang sebagai bentuk dukungan.
-    -   Opsi nominal donasi dari Rp 1.000 hingga Rp 50.000.
-    -   Setiap aksi donasi memerlukan konfirmasi pengguna.
+- **Pelajar & Mahasiswa:** Untuk mencatat jadwal kelas, tugas, dan ujian.
+- **Profesional:** Untuk mengelola tenggat waktu proyek, rapat, dan tugas pekerjaan.
+- **Ibu Rumah Tangga:** Untuk mengatur jadwal belanja, pembayaran tagihan, dan acara keluarga.
+- **Siapa Saja:** Yang membutuhkan alat bantu untuk mengingat aktivitas dan tugas sehari-hari.
 
-## 5. Informasi Aplikasi
+## 4. Teknologi yang Digunakan
 
--   **Halaman Tentang (About Page):** Halaman statis yang berisi informasi dasar tentang aplikasi, versi, dan pengembang. (sudah ada nama Anda)
+- **Framework:** Flutter
+- **Bahasa Pemrograman:** Dart
+- **Database Lokal:** Hive
+- **Manajemen State:** Provider
+- **Notifikasi:** `flutter_local_notifications`
+
+## 5. Model Bisnis
+
+- **Freemium:** Aplikasi dapat diunduh dan digunakan secara gratis dengan fitur-fitur dasar. Fitur-fitur canggih tersedia melalui model berlangganan.
+- **Langganan (Subscription):**
+    - **Tahunan:** Rp 15.000
+    - **2 Tahun:** Rp 25.000
+    - **Permanen:** Rp 50.000
+- **Donasi:** Pengguna dapat memberikan donasi sukarela sebagai bentuk dukungan kepada pengembang.
+
+## 6. Tujuan Sukses
+
+- **Jangka Pendek (3-6 bulan):**
+    - Mencapai 10.000 unduhan di Google Play Store.
+    - Mendapatkan rating rata-rata 4.5 atau lebih tinggi.
+    - Mengonversi 1% pengguna gratis menjadi pengguna berbayar.
+- **Jangka Menengah (1 tahun):**
+    - Mencapai 50.000 unduhan.
+    - Meluncurkan versi iOS.
+    - Memperkenalkan fitur sinkronisasi cloud.
+- **Jangka Panjang (2-3 tahun):**
+    - Menjadi salah satu aplikasi pengingat teratas di pasar lokal.
+    - Membangun komunitas pengguna yang aktif.
+    - Mencapai 100.000 pengguna aktif bulanan.
