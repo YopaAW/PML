@@ -20,17 +20,17 @@ Ingat.in adalah aplikasi mobile yang dirancang untuk membantu pengguna mengelola
     - Memfilter pengingat berdasarkan bulan dan kategori.
 - **Donasi:**
     - Opsi untuk memberikan donasi sukarela kepada pengembang.
+- **Manajemen Kategori Kustom:**
+    - Membuat, mengedit, dan menghapus kategori sesuai kebutuhan pribadi.
 
 ### 2.2 Fitur Premium (Berbayar)
 
-- **Manajemen Kategori Kustom:**
-    - Membuat, mengedit, dan menghapus kategori sesuai kebutuhan pribadi.
 - **Sinkronisasi Antar Perangkat:**
     - Menyinkronkan semua pengingat dan kategori di berbagai perangkat.
+- **Pengulangan Pengingat:**
+    - Fitur pengingat berulang untuk dapat membantu pengguna dalam mengingatkan hal-hal yang berulang, seperti service AC, service motor, pajak motor dll.
 - **Tema Kustom:**
     - Mengubah tampilan aplikasi dengan berbagai pilihan tema eksklusif.
-- **Backup & Restore Data:**
-    - Mencadangkan dan memulihkan data pengingat dengan aman.
 
 ## 3. Siapa yang Akan Menggunakan?
 
