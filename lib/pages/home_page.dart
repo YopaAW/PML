@@ -7,7 +7,7 @@ import '../providers/category_provider.dart';
 import '../models/category_model.dart' as app_models;
 import '../providers/filter_provider.dart';
 import '../providers/theme_provider.dart';
-import '../providers/subscription_provider.dart';
+
 import '../widgets/reminder_card.dart';
 import '../widgets/color_selection_bottom_sheet.dart';
 
@@ -21,7 +21,7 @@ class HomePage extends ConsumerWidget {
     final selectedMonth = ref.watch(selectedMonthProvider);
     final selectedCategory = ref.watch(selectedCategoryProvider);
     final theme = Theme.of(context);
-    final isSubscribed = ref.watch(isSubscribedProvider);
+    
 
     final filteredReminders = allReminders.where((reminder) {
       final reminderDate = reminder.eventDate;
@@ -66,42 +66,15 @@ class HomePage extends ConsumerWidget {
               title: const Text('Kelola Kategori'),
               onTap: () => context.go('/categories'),
             ),
-            ListTile(
-              leading: const Icon(Icons.star),
-              title: const Text('Berlangganan'),
-              onTap: () => context.go('/subscription'),
-            ),
+
             ListTile(
               leading: const Icon(Icons.color_lens),
               title: const Text('Pilih Warna'),
               onTap: () {
-                if (isSubscribed) {
-                  showModalBottomSheet(
-                    context: context,
-                    builder: (context) => const ColorSelectionBottomSheet(),
-                  );
-                } else {
-                  showDialog(
-                    context: context,
-                    builder: (context) => AlertDialog(
-                      title: const Text('Fitur Premium'),
-                      content: const Text('Fitur ini hanya tersedia untuk pengguna premium. Silakan berlangganan untuk membuka fitur ini.'),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.of(context).pop(),
-                          child: const Text('Tutup'),
-                        ),
-                        ElevatedButton(
-                          onPressed: () {
-                            Navigator.of(context).pop();
-                            context.go('/subscription');
-                          },
-                          child: const Text('Berlangganan'),
-                        ),
-                      ],
-                    ),
-                  );
-                }
+                showModalBottomSheet(
+                  context: context,
+                  builder: (context) => const ColorSelectionBottomSheet(),
+                );
               },
             ),
             ListTile(

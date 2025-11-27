@@ -11,7 +11,7 @@ import 'pages/add_edit_page.dart';
 import 'pages/about_page.dart';
 import 'pages/manage_categories_page.dart';
 import 'pages/donation_page.dart';
-import 'pages/subscription_page.dart';
+
 import 'database_hive.dart'; // Import the Hive database
 import 'services/notification_service.dart';
 
@@ -55,10 +55,7 @@ final GoRouter _router = GoRouter(
       path: '/donation',
       builder: (context, state) => const DonationPage(),
     ),
-    GoRoute(
-      path: '/subscription',
-      builder: (context, state) => const SubscriptionPage(),
-    ),
+
     // TODO: Tambahkan rute '/edit/:id' jika diperlukan
   ],
 );

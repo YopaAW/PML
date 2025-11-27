@@ -39,14 +39,14 @@
   - Halaman donasi untuk mendukung developer.
   - Opsi donasi mulai dari Rp 1.000 hingga Rp 50.000.
 
-- [x] **Manajemen Kategori oleh Pengguna (Premium)** - 100%
-  - Pengguna dapat membuat, mengedit, dan menghapus kategori sendiri setelah berlangganan.
+- [ ] **Looping Pengingat** - 0%
+  - Pengguna dapat mengatur pengingat untuk berulang setiap hari, minggu, bulan, atau tahun.
+  - Pengguna gratis memiliki batas 5 slot untuk looping pengingat.
 
-- [x] **Fitur Premium (Berlangganan)** - 100%
-  - Halaman berlangganan dengan pilihan harga:
-    - Rp 15.000 / tahun
-    - Rp 25.000 / 2 tahun
-    - Rp 50.000 / selamanya
+- [x] **Manajemen Kategori oleh Pengguna** - 100%
+  - Pengguna dapat membuat, mengedit, dan menghapus kategori sendiri.
+
+
 
 - [x] **Notifikasi Pengingat** - 100%
   - Aplikasi akan menampilkan notifikasi saat tanggal dan jam pengingat tercapai.
@@ -59,4 +59,4 @@
   - Implementasi kustomisasi warna UI/UX dengan pratinjau langsung.
 
 - [x] **Pembaruan Dokumentasi** - 100%
-  - Memperbarui `PRD.md` dengan struktur dan konten baru.
+  - Memperbarui `PRD.md` dengan menghapus fitur premium dan menambahkan fitur looping pengingat.
