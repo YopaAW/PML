@@ -3,7 +3,7 @@ import 'package:hive/hive.dart';
 
 part 'reminder_model.g.dart';
 
-@HiveType(typeId: 1)
+@HiveType(typeId: 2)
 enum RecurrenceUnit {
   @HiveField(0)
   day,

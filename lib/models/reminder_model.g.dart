@@ -66,7 +66,7 @@ class ReminderAdapter extends TypeAdapter<Reminder> {
 
 class RecurrenceUnitAdapter extends TypeAdapter<RecurrenceUnit> {
   @override
-  final int typeId = 1;
+  final int typeId = 2;
 
   @override
   RecurrenceUnit read(BinaryReader reader) {
