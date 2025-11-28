@@ -5,21 +5,21 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:ingatin/theme.dart';
 import 'package:ingatin/providers/theme_provider.dart';
 import 'package:ingatin/providers/color_palette_provider.dart';
-import 'models/reminder_model.dart';
+
 import 'pages/home_page.dart';
 import 'pages/add_edit_page.dart';
 import 'pages/about_page.dart';
 import 'pages/manage_categories_page.dart';
-import 'pages/donation_page.dart';
+
 
 import 'database_hive.dart'; // Import the Hive database
-import 'services/notification_service.dart';
+
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  final notificationService = NotificationService();
-  await notificationService.init();
-  await notificationService.requestPermissions();
+  // final notificationService = NotificationService();
+  // await notificationService.init();
+  // await notificationService.requestPermissions();
   await DatabaseService.init(); // Initialize Hive database
   await Hive.openBox('settings'); // Open settings box
   runApp(
@@ -38,9 +38,13 @@ final GoRouter _router = GoRouter(
     ),
     GoRoute(
       path: '/add',
+      builder: (context, state) => const AddEditPage(),
+    ),
+    GoRoute(
+      path: '/edit/:id',
       builder: (context, state) {
-        final reminder = state.extra as Reminder?;
-        return AddEditPage(reminder: reminder);
+        final id = state.pathParameters['id'];
+        return AddEditPage(reminderId: id);
       },
     ),
     GoRoute(
@@ -51,10 +55,7 @@ final GoRouter _router = GoRouter(
       path: '/categories',
       builder: (context, state) => const ManageCategoriesPage(),
     ),
-    GoRoute(
-      path: '/donation',
-      builder: (context, state) => const DonationPage(),
-    ),
+
 
     // TODO: Tambahkan rute '/edit/:id' jika diperlukan
   ],

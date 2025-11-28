@@ -19,7 +19,7 @@ class ReminderCard extends ConsumerWidget {
 
     return Card(
       child: InkWell(
-        onTap: () => context.go('/add', extra: reminder),
+        onTap: () => context.go('/edit/${reminder.id}'),
         borderRadius: BorderRadius.circular(16),
         child: Padding(
           padding: const EdgeInsets.all(16.0),
@@ -81,7 +81,7 @@ class ReminderCard extends ConsumerWidget {
                   ],
                   onSelected: (value) {
                     if (value == 'edit') {
-                      context.go('/add', extra: reminder);
+                      context.go('/edit/${reminder.id}');
                     } else if (value == 'delete') {
                       ref.read(reminderListProvider.notifier).removeReminder(reminder.id);
                     }

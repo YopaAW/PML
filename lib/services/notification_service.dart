@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
+import '../models/reminder_model.dart';
 
 class NotificationService {
   static final NotificationService _notificationService = NotificationService._internal();
@@ -55,12 +56,38 @@ class NotificationService {
     }
   }
 
-  Future<void> scheduleNotification(int id, String title, String body, DateTime scheduledTime) async {
+  Future<void> scheduleNotification(Reminder reminder) async {
+    // Cancel previous notification to avoid duplicates on update
+    await cancelNotification(reminder.id);
+
+    // Don't schedule past, non-recurring events
+    if (reminder.eventDate.isBefore(DateTime.now()) &&
+        reminder.recurrence == RecurrenceType.none) {
+      return;
+    }
+
+    DateTimeComponents? matchDateTimeComponents;
+    switch (reminder.recurrence) {
+      case RecurrenceType.daily:
+        matchDateTimeComponents = DateTimeComponents.time;
+        break;
+      case RecurrenceType.weekly:
+        matchDateTimeComponents = DateTimeComponents.dayOfWeekAndTime;
+        break;
+      case RecurrenceType.monthly:
+        matchDateTimeComponents = DateTimeComponents.dayOfMonthAndTime;
+        break;
+
+      case RecurrenceType.none:
+      default: // Handle yearly or any future additions gracefully
+        break;
+    }
+    
     await flutterLocalNotificationsPlugin.zonedSchedule(
-      id,
-      title,
-      body,
-      tz.TZDateTime.from(scheduledTime, tz.local),
+      reminder.id,
+      reminder.title,
+      reminder.description ?? '',
+      tz.TZDateTime.from(reminder.eventDate, tz.local),
       const NotificationDetails(
         android: AndroidNotificationDetails(
           'ingatin_channel_id',
@@ -71,9 +98,7 @@ class NotificationService {
         ),
         iOS: DarwinNotificationDetails(),
       ),
-      androidAllowWhileIdle: true,
-      uiLocalNotificationDateInterpretation:
-          UILocalNotificationDateInterpretation.absoluteTime,
+                androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,      matchDateTimeComponents: matchDateTimeComponents,
     );
   }
 

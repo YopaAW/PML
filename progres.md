@@ -35,28 +35,23 @@
   - Filter berdasarkan kategori.
   - Menu filter kategori akan otomatis terupdate ketika pengguna menambah/mengubah/menghapus kategori.
 
-- [x] **Fitur Donasi** - 100%
-  - Halaman donasi untuk mendukung developer.
-  - Opsi donasi mulai dari Rp 1.000 hingga Rp 50.000.
-
-- [ ] **Looping Pengingat** - 0%
-  - Pengguna dapat mengatur pengingat untuk berulang setiap hari, minggu, bulan, atau tahun.
-  - Pengguna gratis memiliki batas 5 slot untuk looping pengingat.
-
 - [x] **Manajemen Kategori oleh Pengguna** - 100%
   - Pengguna dapat membuat, mengedit, dan menghapus kategori sendiri.
-
-
-
-- [x] **Notifikasi Pengingat** - 100%
-  - Aplikasi akan menampilkan notifikasi saat tanggal dan jam pengingat tercapai.
 
 - [x] **Perbaikan UI/UX Menyeluruh** - 100%
   - Mendesain ulang antarmuka agar lebih modern dan menarik.
   - Meningkatkan pengalaman pengguna agar lebih intuitif.
-  - Redesain halaman donasi untuk tampilan yang lebih estetik dan responsif.
   - Implementasi mode gelap/terang (dark/light mode) yang dapat diubah oleh pengguna.
   - Implementasi kustomisasi warna UI/UX dengan pratinjau langsung.
 
 - [x] **Pembaruan Dokumentasi** - 100%
-  - Memperbarui `PRD.md` dengan menghapus fitur premium dan menambahkan fitur looping pengingat.
+  - Memperbarui `PRD.md` dengan menambahkan fitur premium baru (looping, slot), batasan pengguna gratis, dan model bisnis In-App Purchase.
+  
+- [x] **Penghapusan Fitur Donasi dan Langganan** - 100%
+  - Menghapus semua kode yang terkait dengan fitur donasi dan langganan.
+  - Menghapus halaman donasi.
+  - Menghapus batasan slot pengingat.
+  - Membuat fitur premium menjadi gratis.
+
+- [x] **Penonaktifan Notifikasi untuk Windows** - 100%
+  - Menonaktifkan fitur notifikasi untuk sementara agar aplikasi dapat berjalan di Windows.

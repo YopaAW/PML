@@ -12,25 +12,28 @@ Ingat.in adalah aplikasi mobile yang dirancang untuk membantu pengguna mengelola
     - Membuat, mengedit, dan menghapus pengingat dengan judul, deskripsi, tanggal, dan waktu.
     - Menandai pengingat sebagai 'selesai'.
     - Melihat daftar semua pengingat.
+    - Terbatas hingga 10 slot pengingat aktif.
 - **Notifikasi:**
     - Menerima notifikasi real-time untuk setiap pengingat.
 - **Kategori Dasar:**
     - Menggunakan kategori default (Pribadi, Kerja, Kesehatan, Belanja) untuk mengorganisir pengingat.
+ **Tema Kustom:**
+    - Mengubah tampilan aplikasi dengan berbagai pilihan tema eksklusif.
 - **Filter Pengingat:**
     - Memfilter pengingat berdasarkan bulan dan kategori.
 - **Donasi:**
     - Opsi untuk memberikan donasi sukarela kepada pengembang.
-- **Manajemen Kategori Kustom:**
-    - Membuat, mengedit, dan menghapus kategori sesuai kebutuhan pribadi.
 
 ### 2.2 Fitur Premium (Berbayar)
 
+- **Pengingat Berulang (Looping):**
+    - Mengatur pengingat agar berulang secara harian, mingguan, bulanan, atau tahunan.
+- **Manajemen Kategori Kustom:**
+    - Membuat, mengedit, dan menghapus kategori sesuai kebutuhan pribadi.
 - **Sinkronisasi Antar Perangkat:**
     - Menyinkronkan semua pengingat dan kategori di berbagai perangkat.
-- **Pengulangan Pengingat:**
-    - Fitur pengingat berulang untuk dapat membantu pengguna dalam mengingatkan hal-hal yang berulang, seperti service AC, service motor, pajak motor dll.
-- **Tema Kustom:**
-    - Mengubah tampilan aplikasi dengan berbagai pilihan tema eksklusif.
+- **Backup & Restore Data:**
+    - Mencadangkan dan memulihkan data pengingat dengan aman.
 
 ## 3. Siapa yang Akan Menggunakan?
 
@@ -49,24 +52,25 @@ Ingat.in adalah aplikasi mobile yang dirancang untuk membantu pengguna mengelola
 
 ## 5. Model Bisnis
 
-- **Freemium:** Aplikasi dapat diunduh dan digunakan secara gratis dengan fitur-fitur dasar. Fitur-fitur canggih tersedia melalui model berlangganan.
-- **Langganan (Subscription):**
-    - **Tahunan:** Rp 15.000
-    - **2 Tahun:** Rp 25.000
-    - **Permanen:** Rp 50.000
+- **Freemium:** Aplikasi dapat diunduh dan digunakan secara gratis dengan fitur-fitur dasar. Fitur-fitur canggih.
+
+- **Pembelian In-App (Slot Tambahan):**
+    - **5 Slot:** Rp 15.000
+    - **10 Slot:** Rp 25.000
+    - **25 Slot:** Rp 50.000
 - **Donasi:** Pengguna dapat memberikan donasi sukarela sebagai bentuk dukungan kepada pengembang.
 
 ## 6. Tujuan Sukses
 
 - **Jangka Pendek (3-6 bulan):**
-    - Mencapai 10.000 unduhan di Google Play Store.
-    - Mendapatkan rating rata-rata 4.5 atau lebih tinggi.
+    - Mencapai 1.000 unduhan di Google Play Store.
+    - Mendapatkan rating rata-rata 3.0 atau lebih tinggi.
     - Mengonversi 1% pengguna gratis menjadi pengguna berbayar.
 - **Jangka Menengah (1 tahun):**
-    - Mencapai 50.000 unduhan.
+    - Mencapai 5.000 unduhan.
     - Meluncurkan versi iOS.
     - Memperkenalkan fitur sinkronisasi cloud.
 - **Jangka Panjang (2-3 tahun):**
     - Menjadi salah satu aplikasi pengingat teratas di pasar lokal.
     - Membangun komunitas pengguna yang aktif.
-    - Mencapai 100.000 pengguna aktif bulanan.
+    - Mencapai 10.000 pengguna aktif bulanan.

@@ -1,8 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/reminder_model.dart';
 import '../database_hive.dart'; // Import the Hive database
-import '../services/notification_service.dart';
-import 'category_provider.dart'; // Import category provider
+
+
 
 class ReminderListNotifier extends Notifier<List<Reminder>> {
   @override
@@ -17,7 +17,7 @@ class ReminderListNotifier extends Notifier<List<Reminder>> {
     });
   }
 
-  Future<Reminder> addReminder(String title, DateTime eventDate, {int? categoryId, String? description}) async {
+  Future<Reminder> addReminder(String title, DateTime eventDate, {int? categoryId, String? description, RecurrenceType recurrence = RecurrenceType.none}) async {
     final newReminder = Reminder(
       id: 0, // Will be updated by insertReminder
       title: title,
@@ -25,6 +25,7 @@ class ReminderListNotifier extends Notifier<List<Reminder>> {
       isCompleted: false,
       categoryId: categoryId,
       description: description,
+      recurrence: recurrence,
     );
     final insertedReminder = await DatabaseService.insertReminder(newReminder);
     return insertedReminder;
@@ -38,13 +39,13 @@ class ReminderListNotifier extends Notifier<List<Reminder>> {
     final reminder = state.firstWhere((r) => r.id == id);
     final updatedReminder = reminder.copyWith(isCompleted: !reminder.isCompleted);
     if (updatedReminder.isCompleted) {
-      await NotificationService().cancelNotification(id);
+      // await NotificationService().cancelNotification(id);
     }
     await updateReminder(updatedReminder);
   }
 
   Future<void> removeReminder(int id) async {
-    await NotificationService().cancelNotification(id);
+    // await NotificationService().cancelNotification(id);
     await DatabaseService.deleteReminder(id);
   }
 }

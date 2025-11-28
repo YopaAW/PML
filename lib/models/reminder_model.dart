@@ -1,5 +1,15 @@
-import 'package:flutter/foundation.dart';
+
 import 'package:hive/hive.dart';
+
+part 'reminder_model.g.dart';
+
+enum RecurrenceType {
+  none,
+  daily,
+  weekly,
+  monthly,
+  yearly,
+}
 
 @HiveType(typeId: 0)
 class Reminder {
@@ -15,6 +25,10 @@ class Reminder {
   final int? categoryId;
   @HiveField(5)
   final String? description;
+  @HiveField(6)
+  final RecurrenceType recurrence;
+  @HiveField(7)
+  final bool isPremium;
 
   const Reminder({
     required this.id,
@@ -23,6 +37,8 @@ class Reminder {
     required this.isCompleted,
     this.categoryId,
     this.description,
+    this.recurrence = RecurrenceType.none,
+    this.isPremium = false,
   });
 
   Reminder copyWith({
@@ -32,6 +48,8 @@ class Reminder {
     DateTime? eventDate,
     bool? isCompleted,
     int? categoryId,
+    RecurrenceType? recurrence,
+    bool? isPremium,
   }) {
     return Reminder(
       id: id ?? this.id,
@@ -40,6 +58,8 @@ class Reminder {
       eventDate: eventDate ?? this.eventDate,
       isCompleted: isCompleted ?? this.isCompleted,
       categoryId: categoryId ?? this.categoryId,
+      recurrence: recurrence ?? this.recurrence,
+      isPremium: isPremium ?? this.isPremium,
     );
   }
 
@@ -51,6 +71,8 @@ class Reminder {
       eventDate: DateTime.parse(json['eventDate'] as String),
       isCompleted: json['isCompleted'] as bool,
       categoryId: json['categoryId'] as int?,
+      recurrence: RecurrenceType.values[json['recurrence'] as int],
+      isPremium: json['isPremium'] as bool,
     );
   }
 
@@ -62,6 +84,8 @@ class Reminder {
       'eventDate': eventDate.toIso8601String(),
       'isCompleted': isCompleted,
       'categoryId': categoryId,
+      'recurrence': recurrence.index,
+      'isPremium': isPremium,
     };
   }
 
@@ -75,7 +99,9 @@ class Reminder {
         other.description == description &&
         other.eventDate == eventDate &&
         other.isCompleted == isCompleted &&
-        other.categoryId == categoryId;
+        other.categoryId == categoryId &&
+        other.recurrence == recurrence &&
+        other.isPremium == isPremium;
   }
 
   @override
@@ -85,6 +111,8 @@ class Reminder {
         description.hashCode ^
         eventDate.hashCode ^
         isCompleted.hashCode ^
-        categoryId.hashCode;
+        categoryId.hashCode ^
+        recurrence.hashCode ^
+        isPremium.hashCode;
   }
 }

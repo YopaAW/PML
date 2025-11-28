@@ -2,23 +2,24 @@ import 'package:hive_flutter/hive_flutter.dart';
 
 import 'models/reminder_model.dart';
 import 'models/category_model.dart' as app_models;
-import 'adapters/reminder_adapter.dart';
-import 'adapters/category_adapter.dart';
+
 
 class DatabaseService {
   static late Box<Reminder> _remindersBox;
   static late Box<app_models.Category> _categoriesBox;
+  static late Box _userDataBox; // Box for general user data
   
   static Future<void> init() async {
     await Hive.initFlutter();
     
     // Register adapters
     Hive.registerAdapter(ReminderAdapter());
-    Hive.registerAdapter(CategoryAdapter());
+    Hive.registerAdapter(app_models.CategoryAdapter());
     
     // Open boxes
     _remindersBox = await Hive.openBox<Reminder>('reminders');
     _categoriesBox = await Hive.openBox<app_models.Category>('categories');
+    _userDataBox = await Hive.openBox('userData');
     
     // Initialize default categories if empty
     if (_categoriesBox.isEmpty) {
@@ -118,9 +119,12 @@ class DatabaseService {
     await _categoriesBox.delete(id);
     return true;
   }
+
+
   
   static Future<void> close() async {
     await _remindersBox.close();
     await _categoriesBox.close();
+    await _userDataBox.close();
   }
 }

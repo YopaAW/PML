@@ -5,13 +5,12 @@ import 'package:intl/intl.dart';
 import '../models/reminder_model.dart';
 import '../providers/reminder_provider.dart';
 import '../providers/category_provider.dart';
-import '../providers/subscription_provider.dart';
-import '../services/notification_service.dart';
+
 import '../models/category_model.dart' as app_models;
 
 class AddEditPage extends ConsumerStatefulWidget {
-  final Reminder? reminder;
-  const AddEditPage({super.key, this.reminder});
+  final String? reminderId; // Changed from Reminder? reminder
+  const AddEditPage({super.key, this.reminderId});
 
   @override
   ConsumerState<AddEditPage> createState() => _AddEditPageState();
@@ -24,27 +23,51 @@ class _AddEditPageState extends ConsumerState<AddEditPage> {
   DateTime? _selectedDate;
   TimeOfDay? _selectedTime;
   app_models.Category? _selectedCategory;
+  RecurrenceType _selectedRecurrence = RecurrenceType.none;
+
+  Reminder?
+      _existingReminder; // To hold the fetched reminder for the update logic
 
   @override
   void initState() {
     super.initState();
-    if (widget.reminder != null) {
-      _titleController.text = widget.reminder!.title;
-      _descriptionController.text = widget.reminder!.description ?? '';
-      _selectedDate = widget.reminder!.eventDate;
-      _selectedTime = TimeOfDay.fromDateTime(widget.reminder!.eventDate);
-      
+    // If a reminderId is passed, we are in "edit" mode.
+    if (widget.reminderId != null) {
+      // Use addPostFrameCallback to safely access providers in initState
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) {
+        if (!mounted) return;
+        final reminders = ref.read(reminderListProvider);
+        try {
+          final reminderToEdit = reminders
+              .firstWhere((r) => r.id == int.parse(widget.reminderId!));
+          _existingReminder = reminderToEdit;
+
+          // Populate the form fields with the existing reminder data
+          _titleController.text = reminderToEdit.title;
+          _descriptionController.text = reminderToEdit.description ?? '';
+          _selectedDate = reminderToEdit.eventDate;
+          _selectedTime = TimeOfDay.fromDateTime(reminderToEdit.eventDate);
+          _selectedRecurrence = reminderToEdit.recurrence;
+
+          // Populate the category dropdown
           final categories = ref.read(categoryListProvider).asData?.value;
-          if (categories != null && widget.reminder!.categoryId != null) {
-            final matchingCategory = categories.where((cat) => cat.id == widget.reminder!.categoryId);
+          if (categories != null && reminderToEdit.categoryId != null) {
+            final matchingCategory = categories
+                .where((cat) => cat.id == reminderToEdit.categoryId);
             if (matchingCategory.isNotEmpty) {
               setState(() {
                 _selectedCategory = matchingCategory.first;
               });
             }
+          } else {
+            // Rerender to show populated fields even if category isn't found
+            setState(() {});
           }
+        } catch (e) {
+          // Handle case where reminder with the given ID is not found
+          print('Error finding reminder with ID ${widget.reminderId}: $e');
+          // Optionally, navigate back or show an error message
+          if (mounted) context.go('/');
         }
       });
     }
@@ -68,34 +91,31 @@ class _AddEditPageState extends ConsumerState<AddEditPage> {
         time.minute,
       );
 
-      if (widget.reminder != null) {
-        final updatedReminder = widget.reminder!.copyWith(
+      // Check if we are updating an existing reminder
+      if (_existingReminder != null) {
+        final updatedReminder = _existingReminder!.copyWith(
           title: _titleController.text,
           description: _descriptionController.text,
           eventDate: eventDate,
           categoryId: _selectedCategory?.id,
+          recurrence: _selectedRecurrence,
         );
-        await ref.read(reminderListProvider.notifier).updateReminder(updatedReminder);
-        if (eventDate.isAfter(DateTime.now())) {
-          await NotificationService().scheduleNotification(
-            updatedReminder.id,
-            updatedReminder.title,
-            updatedReminder.description ?? '',
-            eventDate,
-          );
-        }
-      } else {
-        final newReminder = await ref
+        await ref
             .read(reminderListProvider.notifier)
-            .addReminder(_titleController.text, eventDate, categoryId: _selectedCategory?.id, description: _descriptionController.text);
-        if (eventDate.isAfter(DateTime.now())) {
-          await NotificationService().scheduleNotification(
-            newReminder.id,
-            newReminder.title,
-            newReminder.description ?? '',
-            eventDate,
-          );
-        }
+            .updateReminder(updatedReminder);
+        // await NotificationService().scheduleNotification(updatedReminder);
+      } else {
+        // Otherwise, we are adding a new reminder
+
+
+            await ref.read(reminderListProvider.notifier).addReminder(
+                  _titleController.text,
+                  eventDate,
+                  categoryId: _selectedCategory?.id,
+                  description: _descriptionController.text,
+                  recurrence: _selectedRecurrence,
+                );
+        // await NotificationService().scheduleNotification(newReminder);
       }
 
       if (!mounted) return;
@@ -127,7 +147,9 @@ class _AddEditPageState extends ConsumerState<AddEditPage> {
               child: const Text('Tambah'),
               onPressed: () async {
                 if (newCategoryNameController.text.isNotEmpty) {
-                  await ref.read(categoryListProvider.notifier).addCustomCategory(newCategoryNameController.text);
+                  await ref
+                      .read(categoryListProvider.notifier)
+                      .addCustomCategory(newCategoryNameController.text);
                   Navigator.of(context).pop();
                 }
               },
@@ -141,12 +163,11 @@ class _AddEditPageState extends ConsumerState<AddEditPage> {
   @override
   Widget build(BuildContext context) {
     final availableCategories = ref.watch(availableCategoriesProvider);
-    final isSubscribed = ref.watch(isSubscribedProvider);
     final theme = Theme.of(context);
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.reminder == null ? 'Pengingat Baru' : 'Edit Pengingat'),
+        title: Text(widget.reminderId == null ? 'Pengingat Baru' : 'Edit Pengingat'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded),
           onPressed: () => context.go('/'),
@@ -168,7 +189,8 @@ class _AddEditPageState extends ConsumerState<AddEditPage> {
               TextFormField(
                 controller: _titleController,
                 decoration: const InputDecoration(labelText: 'Judul'),
-                validator: (value) => value!.isEmpty ? 'Judul tidak boleh kosong' : null,
+                validator: (value) =>
+                    value!.isEmpty ? 'Judul tidak boleh kosong' : null,
               ),
               const SizedBox(height: 20),
               Row(
@@ -177,7 +199,8 @@ class _AddEditPageState extends ConsumerState<AddEditPage> {
                     child: DropdownButtonFormField<app_models.Category>(
                       value: _selectedCategory,
                       decoration: const InputDecoration(labelText: 'Kategori'),
-                      hint: Text('Pilih Kategori (${availableCategories.length} tersedia)'),
+                      hint: Text(
+                          'Pilih Kategori (${availableCategories.length} tersedia)'),
                       items: availableCategories.map((category) {
                         return DropdownMenuItem<app_models.Category>(
                           value: category,
@@ -191,9 +214,9 @@ class _AddEditPageState extends ConsumerState<AddEditPage> {
                       },
                     ),
                   ),
-                  if (isSubscribed)
                     IconButton(
-                      icon: Icon(Icons.add_circle, color: theme.colorScheme.primary),
+                      icon: Icon(Icons.add_circle,
+                          color: theme.colorScheme.primary),
                       onPressed: _showAddCategoryDialog,
                     ),
                 ],
@@ -202,7 +225,9 @@ class _AddEditPageState extends ConsumerState<AddEditPage> {
               _buildDateTimePicker(
                 context: context,
                 label: 'Tanggal',
-                value: _selectedDate != null ? DateFormat('d MMMM yyyy').format(_selectedDate!) : 'Pilih Tanggal',
+                value: _selectedDate != null
+                    ? DateFormat('d MMMM yyyy').format(_selectedDate!)
+                    : 'Pilih Tanggal',
                 icon: Icons.calendar_today_rounded,
                 onTap: () async {
                   final date = await showDatePicker(
@@ -222,7 +247,9 @@ class _AddEditPageState extends ConsumerState<AddEditPage> {
               _buildDateTimePicker(
                 context: context,
                 label: 'Waktu',
-                value: _selectedTime != null ? _selectedTime!.format(context) : 'Pilih Waktu',
+                value: _selectedTime != null
+                    ? _selectedTime!.format(context)
+                    : 'Pilih Waktu',
                 icon: Icons.access_time_filled_rounded,
                 onTap: () async {
                   final time = await showTimePicker(
@@ -237,6 +264,45 @@ class _AddEditPageState extends ConsumerState<AddEditPage> {
                 },
               ),
               const SizedBox(height: 20),
+                DropdownButtonFormField<RecurrenceType>(
+                  value: _selectedRecurrence,
+                  decoration:
+                      const InputDecoration(labelText: 'Pengulangan'),
+                  items: RecurrenceType.values
+                      .where((type) => type != RecurrenceType.yearly)
+                      .map((type) {
+                    String text;
+                    switch (type) {
+                      case RecurrenceType.daily:
+                        text = 'Harian';
+                        break;
+                      case RecurrenceType.weekly:
+                        text = 'Mingguan';
+                        break;
+                      case RecurrenceType.monthly:
+                        text = 'Bulanan';
+                        break;
+                      case RecurrenceType.yearly:
+                        text = 'Tahunan';
+                        break;
+                      default:
+                        text = 'Tidak Berulang';
+                        break;
+                    }
+                    return DropdownMenuItem<RecurrenceType>(
+                      value: type,
+                      child: Text(text),
+                    );
+                  }).toList(),
+                  onChanged: (RecurrenceType? newValue) {
+                    if (newValue != null) {
+                      setState(() {
+                        _selectedRecurrence = newValue;
+                      });
+                    }
+                  },
+                ),
+
               TextFormField(
                 controller: _descriptionController,
                 decoration: const InputDecoration(labelText: 'Keterangan'),
@@ -260,7 +326,8 @@ class _AddEditPageState extends ConsumerState<AddEditPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: theme.textTheme.labelLarge?.copyWith(color: theme.hintColor)),
+        Text(label,
+            style: theme.textTheme.labelLarge?.copyWith(color: theme.hintColor)),
         const SizedBox(height: 8),
         InkWell(
           onTap: onTap,
