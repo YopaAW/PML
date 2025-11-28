@@ -17,7 +17,7 @@ class ReminderListNotifier extends Notifier<List<Reminder>> {
     });
   }
 
-  Future<Reminder> addReminder(String title, DateTime eventDate, {int? categoryId, String? description, RecurrenceType recurrence = RecurrenceType.none}) async {
+  Future<void> addReminder(String title, DateTime eventDate, {int? categoryId, String? description, RecurrenceType recurrence = RecurrenceType.none}) async {
     final newReminder = Reminder(
       id: 0, // Will be updated by insertReminder
       title: title,
@@ -27,8 +27,7 @@ class ReminderListNotifier extends Notifier<List<Reminder>> {
       description: description,
       recurrence: recurrence,
     );
-    final insertedReminder = await DatabaseService.insertReminder(newReminder);
-    return insertedReminder;
+    await DatabaseService.insertReminder(newReminder);
   }
 
   Future<void> updateReminder(Reminder reminder) async {

@@ -108,7 +108,7 @@ class _AddEditPageState extends ConsumerState<AddEditPage> {
         // Otherwise, we are adding a new reminder
 
 
-            await ref.read(reminderListProvider.notifier).addReminder(
+            ref.read(reminderListProvider.notifier).addReminder(
                   _titleController.text,
                   eventDate,
                   categoryId: _selectedCategory?.id,
@@ -174,7 +174,7 @@ class _AddEditPageState extends ConsumerState<AddEditPage> {
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.save_alt_rounded, size: 28),
+            icon: const Icon(Icons.check_rounded, size: 28),
             onPressed: _saveReminder,
           ),
         ],
