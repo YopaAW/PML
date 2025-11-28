@@ -15,12 +15,19 @@ enum RecurrenceUnit {
   year,
 }
 
+@HiveType(typeId: 3)
 enum RecurrenceType {
+  @HiveField(0)
   none,
+  @HiveField(1)
   daily,
+  @HiveField(2)
   weekly,
+  @HiveField(3)
   monthly,
+  @HiveField(4)
   yearly,
+  @HiveField(5)
   custom,
 }
 

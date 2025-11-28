@@ -16,6 +16,7 @@ class DatabaseService {
     Hive.registerAdapter(ReminderAdapter());
     Hive.registerAdapter(app_models.CategoryAdapter());
     Hive.registerAdapter(RecurrenceUnitAdapter());
+    Hive.registerAdapter(RecurrenceTypeAdapter());
     
     // Open boxes
     _remindersBox = await Hive.openBox<Reminder>('reminders');
