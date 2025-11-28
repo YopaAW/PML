@@ -3,12 +3,20 @@ import 'package:hive/hive.dart';
 
 part 'reminder_model.g.dart';
 
+enum RecurrenceUnit {
+  day,
+  week,
+  month,
+  year,
+}
+
 enum RecurrenceType {
   none,
   daily,
   weekly,
   monthly,
   yearly,
+  custom,
 }
 
 @HiveType(typeId: 0)
@@ -28,7 +36,9 @@ class Reminder {
   @HiveField(6)
   final RecurrenceType recurrence;
   @HiveField(7)
-  final bool isPremium;
+  final int? recurrenceValue;
+  @HiveField(8)
+  final RecurrenceUnit? recurrenceUnit;
 
   const Reminder({
     required this.id,
@@ -38,7 +48,8 @@ class Reminder {
     this.categoryId,
     this.description,
     this.recurrence = RecurrenceType.none,
-    this.isPremium = false,
+    this.recurrenceValue,
+    this.recurrenceUnit,
   });
 
   Reminder copyWith({
@@ -49,7 +60,8 @@ class Reminder {
     bool? isCompleted,
     int? categoryId,
     RecurrenceType? recurrence,
-    bool? isPremium,
+    int? recurrenceValue,
+    RecurrenceUnit? recurrenceUnit,
   }) {
     return Reminder(
       id: id ?? this.id,
@@ -59,7 +71,8 @@ class Reminder {
       isCompleted: isCompleted ?? this.isCompleted,
       categoryId: categoryId ?? this.categoryId,
       recurrence: recurrence ?? this.recurrence,
-      isPremium: isPremium ?? this.isPremium,
+      recurrenceValue: recurrenceValue ?? this.recurrenceValue,
+      recurrenceUnit: recurrenceUnit ?? this.recurrenceUnit,
     );
   }
 
@@ -72,7 +85,8 @@ class Reminder {
       isCompleted: json['isCompleted'] as bool,
       categoryId: json['categoryId'] as int?,
       recurrence: RecurrenceType.values[json['recurrence'] as int],
-      isPremium: json['isPremium'] as bool,
+      recurrenceValue: json['recurrenceValue'] as int?,
+      recurrenceUnit: json['recurrenceUnit'] != null ? RecurrenceUnit.values[json['recurrenceUnit'] as int] : null,
     );
   }
 
@@ -85,7 +99,8 @@ class Reminder {
       'isCompleted': isCompleted,
       'categoryId': categoryId,
       'recurrence': recurrence.index,
-      'isPremium': isPremium,
+      'recurrenceValue': recurrenceValue,
+      'recurrenceUnit': recurrenceUnit?.index,
     };
   }
 
@@ -101,7 +116,8 @@ class Reminder {
         other.isCompleted == isCompleted &&
         other.categoryId == categoryId &&
         other.recurrence == recurrence &&
-        other.isPremium == isPremium;
+        other.recurrenceValue == recurrenceValue &&
+        other.recurrenceUnit == recurrenceUnit;
   }
 
   @override
@@ -113,6 +129,7 @@ class Reminder {
         isCompleted.hashCode ^
         categoryId.hashCode ^
         recurrence.hashCode ^
-        isPremium.hashCode;
+        recurrenceValue.hashCode ^
+        recurrenceUnit.hashCode;
   }
 }

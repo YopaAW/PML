@@ -24,14 +24,15 @@ class ReminderAdapter extends TypeAdapter<Reminder> {
       categoryId: fields[4] as int?,
       description: fields[5] as String?,
       recurrence: fields[6] as RecurrenceType,
-      isPremium: fields[7] as bool,
+      recurrenceValue: fields[7] as int?,
+      recurrenceUnit: fields[8] as RecurrenceUnit?,
     );
   }
 
   @override
   void write(BinaryWriter writer, Reminder obj) {
     writer
-      ..writeByte(8)
+      ..writeByte(9)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -47,7 +48,9 @@ class ReminderAdapter extends TypeAdapter<Reminder> {
       ..writeByte(6)
       ..write(obj.recurrence)
       ..writeByte(7)
-      ..write(obj.isPremium);
+      ..write(obj.recurrenceValue)
+      ..writeByte(8)
+      ..write(obj.recurrenceUnit);
   }
 
   @override

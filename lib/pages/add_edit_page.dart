@@ -24,6 +24,8 @@ class _AddEditPageState extends ConsumerState<AddEditPage> {
   TimeOfDay? _selectedTime;
   app_models.Category? _selectedCategory;
   RecurrenceType _selectedRecurrence = RecurrenceType.none;
+  final _recurrenceValueController = TextEditingController();
+  RecurrenceUnit _selectedRecurrenceUnit = RecurrenceUnit.day;
 
   Reminder?
       _existingReminder; // To hold the fetched reminder for the update logic
@@ -48,6 +50,10 @@ class _AddEditPageState extends ConsumerState<AddEditPage> {
           _selectedDate = reminderToEdit.eventDate;
           _selectedTime = TimeOfDay.fromDateTime(reminderToEdit.eventDate);
           _selectedRecurrence = reminderToEdit.recurrence;
+          if (reminderToEdit.recurrence == RecurrenceType.custom) {
+            _recurrenceValueController.text = reminderToEdit.recurrenceValue.toString();
+            _selectedRecurrenceUnit = reminderToEdit.recurrenceUnit!;
+          }
 
           // Populate the category dropdown
           final categories = ref.read(categoryListProvider).asData?.value;
@@ -77,6 +83,7 @@ class _AddEditPageState extends ConsumerState<AddEditPage> {
   void dispose() {
     _titleController.dispose();
     _descriptionController.dispose();
+    _recurrenceValueController.dispose();
     super.dispose();
   }
 
@@ -103,6 +110,8 @@ class _AddEditPageState extends ConsumerState<AddEditPage> {
           eventDate: eventDate,
           categoryId: _selectedCategory?.id,
           recurrence: _selectedRecurrence,
+          recurrenceValue: _selectedRecurrence == RecurrenceType.custom ? int.tryParse(_recurrenceValueController.text) : null,
+          recurrenceUnit: _selectedRecurrence == RecurrenceType.custom ? _selectedRecurrenceUnit : null,
         );
         await ref
             .read(reminderListProvider.notifier)
@@ -118,6 +127,8 @@ class _AddEditPageState extends ConsumerState<AddEditPage> {
                   categoryId: _selectedCategory?.id,
                   description: _descriptionController.text,
                   recurrence: _selectedRecurrence,
+                  recurrenceValue: _selectedRecurrence == RecurrenceType.custom ? int.tryParse(_recurrenceValueController.text) : null,
+                  recurrenceUnit: _selectedRecurrence == RecurrenceType.custom ? _selectedRecurrenceUnit : null,
                 );
         print("Reminder added.");
         // await NotificationService().scheduleNotification(newReminder);
@@ -275,10 +286,9 @@ class _AddEditPageState extends ConsumerState<AddEditPage> {
               const SizedBox(height: 20),
                 DropdownButtonFormField<RecurrenceType>(
                   value: _selectedRecurrence,
-                  decoration:
-                      const InputDecoration(labelText: 'Pengulangan'),
+                  decoration: const InputDecoration(labelText: 'Pengulangan'),
                   items: RecurrenceType.values
-                      .where((type) => type != RecurrenceType.yearly)
+                      .where((type) => type != RecurrenceType.yearly) // Exclude yearly if it's not a standard option anymore or keep if it is
                       .map((type) {
                     String text;
                     switch (type) {
@@ -291,8 +301,8 @@ class _AddEditPageState extends ConsumerState<AddEditPage> {
                       case RecurrenceType.monthly:
                         text = 'Bulanan';
                         break;
-                      case RecurrenceType.yearly:
-                        text = 'Tahunan';
+                      case RecurrenceType.custom:
+                        text = 'Kustom';
                         break;
                       default:
                         text = 'Tidak Berulang';
@@ -311,6 +321,64 @@ class _AddEditPageState extends ConsumerState<AddEditPage> {
                     }
                   },
                 ),
+                if (_selectedRecurrence == RecurrenceType.custom) ...[
+                  const SizedBox(height: 20),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextFormField(
+                          controller: _recurrenceValueController,
+                          keyboardType: TextInputType.number,
+                          decoration: const InputDecoration(labelText: 'Setiap'),
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Nilai tidak boleh kosong';
+                            }
+                            if (int.tryParse(value) == null || int.parse(value) <= 0) {
+                              return 'Masukkan angka yang valid (>0)';
+                            }
+                            return null;
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: DropdownButtonFormField<RecurrenceUnit>(
+                          value: _selectedRecurrenceUnit,
+                          decoration: const InputDecoration(labelText: 'Satuan'),
+                          items: RecurrenceUnit.values.map((unit) {
+                            String text;
+                            switch (unit) {
+                              case RecurrenceUnit.day:
+                                text = 'Hari';
+                                break;
+                              case RecurrenceUnit.week:
+                                text = 'Minggu';
+                                break;
+                              case RecurrenceUnit.month:
+                                text = 'Bulan';
+                                break;
+                              case RecurrenceUnit.year:
+                                text = 'Tahun';
+                                break;
+                            }
+                            return DropdownMenuItem<RecurrenceUnit>(
+                              value: unit,
+                              child: Text(text),
+                            );
+                          }).toList(),
+                          onChanged: (RecurrenceUnit? newValue) {
+                            if (newValue != null) {
+                              setState(() {
+                                _selectedRecurrenceUnit = newValue;
+                              });
+                            }
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
 
               TextFormField(
                 controller: _descriptionController,
