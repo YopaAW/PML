@@ -81,7 +81,9 @@ class _AddEditPageState extends ConsumerState<AddEditPage> {
   }
 
   void _saveReminder() async {
+    print("Saving reminder...");
     if (_formKey.currentState!.validate() && _selectedDate != null) {
+      print("Form is valid and date is selected.");
       final time = _selectedTime ?? TimeOfDay.now();
       final eventDate = DateTime(
         _selectedDate!.year,
@@ -90,9 +92,11 @@ class _AddEditPageState extends ConsumerState<AddEditPage> {
         time.hour,
         time.minute,
       );
+      print("Event date: $eventDate");
 
       // Check if we are updating an existing reminder
       if (_existingReminder != null) {
+        print("Updating existing reminder.");
         final updatedReminder = _existingReminder!.copyWith(
           title: _titleController.text,
           description: _descriptionController.text,
@@ -103,11 +107,11 @@ class _AddEditPageState extends ConsumerState<AddEditPage> {
         await ref
             .read(reminderListProvider.notifier)
             .updateReminder(updatedReminder);
+        print("Reminder updated.");
         // await NotificationService().scheduleNotification(updatedReminder);
       } else {
         // Otherwise, we are adding a new reminder
-
-
+        print("Adding new reminder.");
             ref.read(reminderListProvider.notifier).addReminder(
                   _titleController.text,
                   eventDate,
@@ -115,15 +119,20 @@ class _AddEditPageState extends ConsumerState<AddEditPage> {
                   description: _descriptionController.text,
                   recurrence: _selectedRecurrence,
                 );
+        print("Reminder added.");
         // await NotificationService().scheduleNotification(newReminder);
       }
 
       if (!mounted) return;
+      print("Navigating to home.");
       context.goNamed('home');
     } else if (_selectedDate == null) {
+      print("Date is not selected.");
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Tanggal harus diisi!')),
       );
+    } else {
+      print("Form is not valid.");
     }
   }
 
