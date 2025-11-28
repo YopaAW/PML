@@ -2,8 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../providers/category_provider.dart';
-import '../providers/subscription_provider.dart';
-import '../providers/remaining_time_provider.dart';
+
 import '../models/category_model.dart' as app_models;
 
 class ManageCategoriesPage extends ConsumerWidget {
@@ -11,9 +10,7 @@ class ManageCategoriesPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isSubscribed = ref.watch(isSubscribedProvider);
     final categoriesAsync = ref.watch(categoryListProvider);
-    final remainingTimeAsync = ref.watch(remainingTimeProvider);
     final theme = Theme.of(context);
 
     return Scaffold(
@@ -24,28 +21,8 @@ class ManageCategoriesPage extends ConsumerWidget {
           onPressed: () => context.go('/'),
         ),
       ),
-      body: isSubscribed
-          ? Column(
+      body: Column(
               children: [
-                Card(
-                  margin: const EdgeInsets.all(16),
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Status Langganan', style: theme.textTheme.titleLarge),
-                        const SizedBox(height: 8),
-                        remainingTimeAsync.when(
-                          data: (time) => Text(time, style: theme.textTheme.bodyLarge),
-                          loading: () => const CircularProgressIndicator(),
-                          error: (err, stack) => Text('Error: $err', style: theme.textTheme.bodyLarge),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                const Divider(height: 1),
                 Expanded(
                   child: categoriesAsync.when(
                     data: (categories) {
@@ -85,41 +62,11 @@ class ManageCategoriesPage extends ConsumerWidget {
                   ),
                 ),
               ],
-            )
-          : Center(
-              child: Padding(
-                padding: const EdgeInsets.all(20.0),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.lock_outline_rounded, size: 100, color: theme.disabledColor),
-                    const SizedBox(height: 20),
-                    Text(
-                      'Fitur ini hanya untuk pengguna premium.',
-                      style: theme.textTheme.headlineSmall,
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      'Dengan berlangganan, Anda dapat membuat, mengedit, dan menghapus kategori Anda sendiri.',
-                      style: theme.textTheme.bodyLarge,
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 24),
-                    ElevatedButton(
-                      onPressed: () => context.go('/subscription'),
-                      child: const Text('Berlangganan Sekarang'),
-                    ),
-                  ],
-                ),
-              ),
             ),
-      floatingActionButton: isSubscribed
-          ? FloatingActionButton(
+      floatingActionButton: FloatingActionButton(
               onPressed: () => _showAddEditCategoryDialog(context, ref),
               child: const Icon(Icons.add),
-            )
-          : null,
+            ),
     );
   }
 
