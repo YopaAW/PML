@@ -3,10 +3,15 @@ import 'package:hive/hive.dart';
 
 part 'reminder_model.g.dart';
 
+@HiveType(typeId: 1)
 enum RecurrenceUnit {
+  @HiveField(0)
   day,
+  @HiveField(1)
   week,
+  @HiveField(2)
   month,
+  @HiveField(3)
   year,
 }
 

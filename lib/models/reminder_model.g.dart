@@ -63,3 +63,52 @@ class ReminderAdapter extends TypeAdapter<Reminder> {
           runtimeType == other.runtimeType &&
           typeId == other.typeId;
 }
+
+class RecurrenceUnitAdapter extends TypeAdapter<RecurrenceUnit> {
+  @override
+  final int typeId = 1;
+
+  @override
+  RecurrenceUnit read(BinaryReader reader) {
+    switch (reader.readByte()) {
+      case 0:
+        return RecurrenceUnit.day;
+      case 1:
+        return RecurrenceUnit.week;
+      case 2:
+        return RecurrenceUnit.month;
+      case 3:
+        return RecurrenceUnit.year;
+      default:
+        return RecurrenceUnit.day;
+    }
+  }
+
+  @override
+  void write(BinaryWriter writer, RecurrenceUnit obj) {
+    switch (obj) {
+      case RecurrenceUnit.day:
+        writer.writeByte(0);
+        break;
+      case RecurrenceUnit.week:
+        writer.writeByte(1);
+        break;
+      case RecurrenceUnit.month:
+        writer.writeByte(2);
+        break;
+      case RecurrenceUnit.year:
+        writer.writeByte(3);
+        break;
+    }
+  }
+
+  @override
+  int get hashCode => typeId.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is RecurrenceUnitAdapter &&
+          runtimeType == other.runtimeType &&
+          typeId == other.typeId;
+}
