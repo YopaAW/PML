@@ -119,7 +119,7 @@ class _AddEditPageState extends ConsumerState<AddEditPage> {
       }
 
       if (!mounted) return;
-      context.go('/');
+      context.goNamed('home');
     } else if (_selectedDate == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Tanggal harus diisi!')),
