@@ -17,11 +17,11 @@ class ReminderAdapter extends TypeAdapter<Reminder> {
       for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
     };
     return Reminder(
-      id: fields[0] as int,
+      id: fields[0] as String,
       title: fields[1] as String,
       eventDate: fields[2] as DateTime,
       isCompleted: fields[3] as bool,
-      categoryId: fields[4] as int?,
+      categoryId: fields[4] as String?,
       description: fields[5] as String?,
       recurrence: fields[6] as RecurrenceType,
       recurrenceValue: fields[7] as int?,

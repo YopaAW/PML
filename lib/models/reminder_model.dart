@@ -1,4 +1,3 @@
-
 import 'package:hive/hive.dart';
 
 part 'reminder_model.g.dart';
@@ -34,7 +33,7 @@ enum RecurrenceType {
 @HiveType(typeId: 0)
 class Reminder {
   @HiveField(0)
-  final int id;
+  final String id;
   @HiveField(1)
   final String title;
   @HiveField(2)
@@ -42,7 +41,7 @@ class Reminder {
   @HiveField(3)
   final bool isCompleted;
   @HiveField(4)
-  final int? categoryId;
+  final String? categoryId;
   @HiveField(5)
   final String? description;
   @HiveField(6)
@@ -65,12 +64,12 @@ class Reminder {
   });
 
   Reminder copyWith({
-    int? id,
+    String? id,
     String? title,
     String? description,
     DateTime? eventDate,
     bool? isCompleted,
-    int? categoryId,
+    String? categoryId,
     RecurrenceType? recurrence,
     int? recurrenceValue,
     RecurrenceUnit? recurrenceUnit,
@@ -90,12 +89,12 @@ class Reminder {
 
   factory Reminder.fromJson(Map<String, dynamic> json) {
     return Reminder(
-      id: json['id'] as int,
+      id: json['id'] as String,
       title: json['title'] as String,
       description: json['description'] as String?,
       eventDate: DateTime.parse(json['eventDate'] as String),
       isCompleted: json['isCompleted'] as bool,
-      categoryId: json['categoryId'] as int?,
+      categoryId: json['categoryId'] as String?,
       recurrence: RecurrenceType.values[json['recurrence'] as int],
       recurrenceValue: json['recurrenceValue'] as int?,
       recurrenceUnit: json['recurrenceUnit'] != null ? RecurrenceUnit.values[json['recurrenceUnit'] as int] : null,
@@ -108,6 +107,33 @@ class Reminder {
       'title': title,
       'description': description,
       'eventDate': eventDate.toIso8601String(),
+      'isCompleted': isCompleted,
+      'categoryId': categoryId,
+      'recurrence': recurrence.index,
+      'recurrenceValue': recurrenceValue,
+      'recurrenceUnit': recurrenceUnit?.index,
+    };
+  }
+
+  factory Reminder.fromFirestore(Map<String, dynamic> data, String documentId) {
+    return Reminder(
+      id: documentId,
+      title: data['title'] as String? ?? '',
+      description: data['description'] as String?,
+      eventDate: (data['eventDate'] as dynamic).toDate(),
+      isCompleted: data['isCompleted'] as bool? ?? false,
+      categoryId: data['categoryId'] as String?,
+      recurrence: RecurrenceType.values[data['recurrence'] as int? ?? 0],
+      recurrenceValue: data['recurrenceValue'] as int?,
+      recurrenceUnit: data['recurrenceUnit'] != null ? RecurrenceUnit.values[data['recurrenceUnit'] as int] : null,
+    );
+  }
+
+  Map<String, dynamic> toFirestore() {
+    return {
+      'title': title,
+      'description': description,
+      'eventDate': eventDate,
       'isCompleted': isCompleted,
       'categoryId': categoryId,
       'recurrence': recurrence.index,
@@ -145,3 +171,5 @@ class Reminder {
         recurrenceUnit.hashCode;
   }
 }
+
+

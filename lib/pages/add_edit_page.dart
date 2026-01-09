@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../models/reminder_model.dart';
 import '../providers/reminder_provider.dart';
 import '../providers/category_provider.dart';
+import '../providers/premium_provider.dart';
 
 import '../models/category_model.dart' as app_models;
+import '../services/notification_service.dart';
 
 class AddEditPage extends ConsumerStatefulWidget {
   final String? reminderId; // Changed from Reminder? reminder
@@ -26,6 +29,7 @@ class _AddEditPageState extends ConsumerState<AddEditPage> {
   RecurrenceType _selectedRecurrence = RecurrenceType.none;
   final _recurrenceValueController = TextEditingController();
   RecurrenceUnit _selectedRecurrenceUnit = RecurrenceUnit.day;
+  bool _isLoopingEnabled = false;
 
   Reminder?
       _existingReminder; // To hold the fetched reminder for the update logic
@@ -41,7 +45,7 @@ class _AddEditPageState extends ConsumerState<AddEditPage> {
         final reminders = ref.read(reminderListProvider);
         try {
           final reminderToEdit = reminders
-              .firstWhere((r) => r.id == int.parse(widget.reminderId!));
+              .firstWhere((r) => r.id == widget.reminderId!);
           _existingReminder = reminderToEdit;
 
           // Populate the form fields with the existing reminder data
@@ -50,6 +54,8 @@ class _AddEditPageState extends ConsumerState<AddEditPage> {
           _selectedDate = reminderToEdit.eventDate;
           _selectedTime = TimeOfDay.fromDateTime(reminderToEdit.eventDate);
           _selectedRecurrence = reminderToEdit.recurrence;
+          _isLoopingEnabled = reminderToEdit.recurrence != RecurrenceType.none;
+          
           if (reminderToEdit.recurrence == RecurrenceType.custom) {
             _recurrenceValueController.text = reminderToEdit.recurrenceValue.toString();
             _selectedRecurrenceUnit = reminderToEdit.recurrenceUnit!;
@@ -87,48 +93,77 @@ class _AddEditPageState extends ConsumerState<AddEditPage> {
     super.dispose();
   }
 
+  bool _isSaving = false;
+
   void _saveReminder() async {
+    if (_isSaving) return;
+    
     if (_formKey.currentState!.validate() && _selectedDate != null) {
-      final time = _selectedTime ?? TimeOfDay.now();
-      final eventDate = DateTime(
-        _selectedDate!.year,
-        _selectedDate!.month,
-        _selectedDate!.day,
-        time.hour,
-        time.minute,
-      );
-
-      // Check if we are updating an existing reminder
-      if (_existingReminder != null) {
-        final updatedReminder = _existingReminder!.copyWith(
-          title: _titleController.text,
-          description: _descriptionController.text,
-          eventDate: eventDate,
-          categoryId: _selectedCategory?.id,
-          recurrence: _selectedRecurrence,
-          recurrenceValue: _selectedRecurrence == RecurrenceType.custom ? int.tryParse(_recurrenceValueController.text) : null,
-          recurrenceUnit: _selectedRecurrence == RecurrenceType.custom ? _selectedRecurrenceUnit : null,
+      setState(() => _isSaving = true);
+      
+      try {
+        final time = _selectedTime ?? TimeOfDay.now();
+        final eventDate = DateTime(
+          _selectedDate!.year,
+          _selectedDate!.month,
+          _selectedDate!.day,
+          time.hour,
+          time.minute,
         );
-        await ref
-            .read(reminderListProvider.notifier)
-            .updateReminder(updatedReminder);
-        // await NotificationService().scheduleNotification(updatedReminder);
-      } else {
-        // Otherwise, we are adding a new reminder
-            ref.read(reminderListProvider.notifier).addReminder(
-                  _titleController.text,
-                  eventDate,
-                  categoryId: _selectedCategory?.id,
-                  description: _descriptionController.text,
-                  recurrence: _selectedRecurrence,
-                  recurrenceValue: _selectedRecurrence == RecurrenceType.custom ? int.tryParse(_recurrenceValueController.text) : null,
-                  recurrenceUnit: _selectedRecurrence == RecurrenceType.custom ? _selectedRecurrenceUnit : null,
-                );
-        // await NotificationService().scheduleNotification(newReminder);
-      }
 
-      if (!mounted) return;
-      context.goNamed('home');
+        // Check if we are updating an existing reminder
+        if (_existingReminder != null) {
+          final updatedReminder = _existingReminder!.copyWith(
+            title: _titleController.text,
+            description: _descriptionController.text,
+            eventDate: eventDate,
+            categoryId: _selectedCategory?.id,
+            recurrence: _isLoopingEnabled ? _selectedRecurrence : RecurrenceType.none,
+            recurrenceValue: _isLoopingEnabled 
+                ? (_selectedRecurrence == RecurrenceType.custom 
+                    ? int.tryParse(_recurrenceValueController.text) 
+                    : (_selectedRecurrence == RecurrenceType.monthly ? _selectedDate!.day : null))
+                : null,
+            recurrenceUnit: _isLoopingEnabled && _selectedRecurrence == RecurrenceType.custom ? _selectedRecurrenceUnit : null,
+          );
+          await ref
+              .read(reminderListProvider.notifier)
+              .updateReminder(updatedReminder);
+          
+          // Schedule notification for updated reminder
+          await NotificationService().scheduleNotification(updatedReminder);
+        } else {
+          // Otherwise, we are adding a new reminder
+          final savedReminder = await ref.read(reminderListProvider.notifier).addReminder(
+                _titleController.text,
+                eventDate,
+                categoryId: _selectedCategory?.id,
+                description: _descriptionController.text,
+                recurrence: _isLoopingEnabled ? _selectedRecurrence : RecurrenceType.none,
+                recurrenceValue: _isLoopingEnabled 
+                    ? (_selectedRecurrence == RecurrenceType.custom 
+                        ? int.tryParse(_recurrenceValueController.text) 
+                        : (_selectedRecurrence == RecurrenceType.monthly ? _selectedDate!.day : null))
+                    : null,
+                recurrenceUnit: _isLoopingEnabled && _selectedRecurrence == RecurrenceType.custom ? _selectedRecurrenceUnit : null,
+              );
+          
+          // Schedule notification for new reminder
+          await NotificationService().scheduleNotification(savedReminder);
+        }
+
+        if (mounted) {
+          context.go('/');
+        }
+      } catch (e) {
+        debugPrint('Error saving reminder: $e');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Gagal menyimpan: $e')),
+          );
+          setState(() => _isSaving = false);
+        }
+      }
     } else if (_selectedDate == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Tanggal harus diisi!')),
@@ -156,10 +191,22 @@ class _AddEditPageState extends ConsumerState<AddEditPage> {
               child: const Text('Tambah'),
               onPressed: () async {
                 if (newCategoryNameController.text.isNotEmpty) {
-                  await ref
+                  final success = await ref
                       .read(categoryListProvider.notifier)
                       .addCustomCategory(newCategoryNameController.text);
-                  Navigator.of(context).pop();
+                  
+                  if (context.mounted) {
+                    Navigator.of(context).pop();
+                    if (success) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Kategori berhasil ditambahkan')),
+                      );
+                    } else {
+                       ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Gagal: Fitur Premium atau Error')),
+                      );
+                    }
+                  }
                 }
               },
             ),
@@ -182,10 +229,15 @@ class _AddEditPageState extends ConsumerState<AddEditPage> {
           onPressed: () => context.go('/'),
         ),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.check_rounded, size: 28),
-            onPressed: _saveReminder,
-          ),
+            _isSaving 
+            ? const Padding(
+                padding: EdgeInsets.all(12.0),
+                child: CircularProgressIndicator(),
+              )
+            : IconButton(
+              icon: const Icon(Icons.check_rounded, size: 28),
+              onPressed: _saveReminder,
+            ),
         ],
       ),
       body: SingleChildScrollView(
@@ -273,101 +325,227 @@ class _AddEditPageState extends ConsumerState<AddEditPage> {
                 },
               ),
               const SizedBox(height: 20),
-                DropdownButtonFormField<RecurrenceType>(
-                  value: _selectedRecurrence,
-                  decoration: const InputDecoration(labelText: 'Pengulangan'),
-                  items: RecurrenceType.values
-                      .where((type) => type != RecurrenceType.yearly) // Exclude yearly if it's not a standard option anymore or keep if it is
-                      .map((type) {
-                    String text;
-                    switch (type) {
-                      case RecurrenceType.daily:
-                        text = 'Harian';
-                        break;
-                      case RecurrenceType.weekly:
-                        text = 'Mingguan';
-                        break;
-                      case RecurrenceType.monthly:
-                        text = 'Bulanan';
-                        break;
-                      case RecurrenceType.custom:
-                        text = 'Kustom';
-                        break;
-                      default:
-                        text = 'Tidak Berulang';
-                        break;
-                    }
-                    return DropdownMenuItem<RecurrenceType>(
-                      value: type,
-                      child: Text(text),
-                    );
-                  }).toList(),
-                  onChanged: (RecurrenceType? newValue) {
-                    if (newValue != null) {
-                      setState(() {
-                        _selectedRecurrence = newValue;
-                      });
-                    }
-                  },
+              // Recurrence Section
+              Container(
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: theme.colorScheme.outlineVariant),
                 ),
-                if (_selectedRecurrence == RecurrenceType.custom) ...[
-                  const SizedBox(height: 20),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TextFormField(
-                          controller: _recurrenceValueController,
-                          keyboardType: TextInputType.number,
-                          decoration: const InputDecoration(labelText: 'Setiap'),
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Nilai tidak boleh kosong';
-                            }
-                            if (int.tryParse(value) == null || int.parse(value) <= 0) {
-                              return 'Masukkan angka yang valid (>0)';
-                            }
-                            return null;
-                          },
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: DropdownButtonFormField<RecurrenceUnit>(
-                          value: _selectedRecurrenceUnit,
-                          decoration: const InputDecoration(labelText: 'Satuan'),
-                          items: RecurrenceUnit.values.map((unit) {
-                            String text;
-                            switch (unit) {
-                              case RecurrenceUnit.day:
-                                text = 'Hari';
-                                break;
-                              case RecurrenceUnit.week:
-                                text = 'Minggu';
-                                break;
-                              case RecurrenceUnit.month:
-                                text = 'Bulan';
-                                break;
-                              case RecurrenceUnit.year:
-                                text = 'Tahun';
-                                break;
-                            }
-                            return DropdownMenuItem<RecurrenceUnit>(
-                              value: unit,
-                              child: Text(text),
-                            );
-                          }).toList(),
-                          onChanged: (RecurrenceUnit? newValue) {
-                            if (newValue != null) {
-                              setState(() {
-                                _selectedRecurrenceUnit = newValue;
-                              });
-                            }
-                          },
+                padding: const EdgeInsets.all(4),
+                child: Column(
+                  children: [
+                    SwitchListTile(
+                      title: const Text('Ulangi Pengingat (Looping)'),
+                      subtitle: Text(_isLoopingEnabled ? 'Pengingat akan muncul berulang' : 'Hanya sekali'),
+                      secondary: Icon(Icons.loop, color: _isLoopingEnabled ? theme.colorScheme.primary : Colors.grey),
+                      value: _isLoopingEnabled,
+                      onChanged: (bool value) {
+                        setState(() {
+                          _isLoopingEnabled = value;
+                          if (value && _selectedRecurrence == RecurrenceType.none) {
+                            _selectedRecurrence = RecurrenceType.daily; // Default to daily
+                          }
+                        });
+                      },
+                    ),
+                    
+                    if (_isLoopingEnabled) ...[
+                      const Divider(height: 1),
+                      Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Slot Info Validation
+                            Consumer(
+                              builder: (context, ref, child) {
+                                final remainingAsync = ref.watch(remainingLoopingSlotsProvider);
+                                final remaining = remainingAsync.valueOrNull ?? 0;
+                                final isEditingLooping = _existingReminder != null && 
+                                                         _existingReminder!.recurrence != RecurrenceType.none;
+                                
+                                // User butuh slot jika: Baru bikin looping ATAU Edit dari non-looping ke looping
+                                final needsSlot = !isEditingLooping;
+                                final hasSlot = remaining > 0;
+                                
+                                if (needsSlot && !hasSlot) {
+                                  return Container(
+                                    padding: const EdgeInsets.all(12),
+                                    margin: const EdgeInsets.only(bottom: 16),
+                                    decoration: BoxDecoration(
+                                      color: theme.colorScheme.errorContainer,
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Row(
+                                          children: [
+                                            Icon(Icons.warning_amber_rounded, color: theme.colorScheme.error),
+                                            const SizedBox(width: 8),
+                                            Expanded(
+                                              child: Text(
+                                                'Slot Looping Habis!',
+                                                style: TextStyle(
+                                                  color: theme.colorScheme.error,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 8),
+                                        Text(
+                                          'Upgrade ke Premium untuk menambah slot.',
+                                          style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
+                                        ),
+                                        const SizedBox(height: 12),
+                                        SizedBox(
+                                          width: double.infinity,
+                                          child: FilledButton.tonal(
+                                            onPressed: () => context.push('/slot'), // Go to SlotPage
+                                            child: const Text('Beli Slot Tambahan'),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                }
+                                
+                                return Padding(
+                                  padding: const EdgeInsets.only(bottom: 16.0),
+                                  child: Row(
+                                    children: [
+                                      Icon(Icons.info_outline, size: 16, color: theme.colorScheme.primary),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        'Sisa slot looping: $remaining',
+                                        style: TextStyle(color: theme.colorScheme.primary),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              },
+                            ),
+                            
+                            DropdownButtonFormField<RecurrenceType>(
+                              value: _selectedRecurrence == RecurrenceType.none ? RecurrenceType.daily : _selectedRecurrence,
+                              decoration: const InputDecoration(
+                                labelText: 'Frekuensi Pengulangan',
+                                border: OutlineInputBorder(),
+                                contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+                              ),
+                              items: RecurrenceType.values
+                                  .where((type) => type != RecurrenceType.none && type != RecurrenceType.yearly)
+                                  .map((type) {
+                                String text;
+                                switch (type) {
+                                  case RecurrenceType.daily:
+                                    text = 'Harian';
+                                    break;
+                                  case RecurrenceType.weekly:
+                                    text = 'Mingguan';
+                                    break;
+                                  case RecurrenceType.monthly:
+                                    text = 'Bulanan';
+                                    break;
+                                  case RecurrenceType.custom:
+                                    text = 'Kustom...';
+                                    break;
+                                  default:
+                                    text = '';
+                                }
+                                return DropdownMenuItem<RecurrenceType>(
+                                  value: type,
+                                  child: Text(text),
+                                );
+                              }).toList(),
+                              onChanged: (RecurrenceType? newValue) {
+                                if (newValue != null) {
+                                  setState(() {
+                                    _selectedRecurrence = newValue;
+                                  });
+                                }
+                              },
+                            ),
+                            
+                            if (_selectedRecurrence == RecurrenceType.custom) ...[
+                              const SizedBox(height: 16),
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Expanded(
+                                    flex: 2,
+                                    child: TextFormField(
+                                      controller: _recurrenceValueController,
+                                      keyboardType: TextInputType.number,
+                                      decoration: const InputDecoration(
+                                        labelText: 'Setiap',
+                                        border: OutlineInputBorder(),
+                                      ),
+                                      validator: (value) {
+                                        if (!_isLoopingEnabled || _selectedRecurrence != RecurrenceType.custom) return null;
+                                        if (value == null || value.isEmpty) {
+                                          return 'Wajib diisi';
+                                        }
+                                        if (int.tryParse(value) == null || int.parse(value) <= 0) {
+                                          return '> 0';
+                                        }
+                                        return null;
+                                      },
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    flex: 3,
+                                    child: DropdownButtonFormField<RecurrenceUnit>(
+                                      value: _selectedRecurrenceUnit,
+                                      decoration: const InputDecoration(
+                                        labelText: 'Satuan',
+                                        border: OutlineInputBorder(),
+                                      ),
+                                      items: RecurrenceUnit.values.map((unit) {
+                                        String text;
+                                        switch (unit) {
+                                          case RecurrenceUnit.day:
+                                            text = 'Hari';
+                                            break;
+                                          case RecurrenceUnit.week:
+                                            text = 'Minggu';
+                                            break;
+                                          case RecurrenceUnit.month:
+                                            text = 'Bulan';
+                                            break;
+                                          case RecurrenceUnit.year:
+                                            text = 'Tahun';
+                                            break;
+                                        }
+                                        return DropdownMenuItem<RecurrenceUnit>(
+                                          value: unit,
+                                          child: Text(text),
+                                        );
+                                      }).toList(),
+                                      onChanged: (RecurrenceUnit? newValue) {
+                                        if (newValue != null) {
+                                          setState(() {
+                                            _selectedRecurrenceUnit = newValue;
+                                          });
+                                        }
+                                      },
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ],
                         ),
                       ),
                     ],
-                  ),
-                ],
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
 
               TextFormField(
                 controller: _descriptionController,

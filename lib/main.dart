@@ -5,23 +5,49 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:ingatin/theme.dart';
 import 'package:ingatin/providers/theme_provider.dart';
 import 'package:ingatin/providers/color_palette_provider.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
+import 'services/database_service.dart';
+import 'services/unified_database_service.dart';
+import 'services/notification_service.dart';
+import 'services/slot_service.dart';
 
 import 'pages/home_page.dart';
 import 'pages/add_edit_page.dart';
 import 'pages/about_page.dart';
 import 'pages/manage_categories_page.dart';
-
-
-import 'database_hive.dart'; // Import the Hive database
+import 'pages/splash_page.dart';
+import 'pages/login_page.dart';
+import 'pages/slot_page.dart';
+import 'pages/profile_page.dart';
 
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  // final notificationService = NotificationService();
-  // await notificationService.init();
-  // await notificationService.requestPermissions();
-  await DatabaseService.init(); // Initialize Hive database
+  
+  // Initialize Firebase
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+  
+  // Initialize Hive
+  await Hive.initFlutter();
   await Hive.openBox('settings'); // Open settings box
+  
+  // Initialize Database Service (Firebase Firestore)
+  await DatabaseService.init();
+  
+  // Initialize Unified Database Service (Local + Cloud)
+  await UnifiedDatabaseService.init();
+  
+  // Initialize Notification Service
+  await NotificationService().init();
+  await NotificationService().requestPermissions();
+
+  // Initialize In-App Purchase
+  // ignore: unused_local_variable
+  final iapAvailable = await SlotService.initializeIAP();
+  
   runApp(
     ProviderScope(
       child: const MyApp(),
@@ -30,7 +56,7 @@ void main() async {
 }
 
 final GoRouter _router = GoRouter(
-  initialLocation: '/',
+  initialLocation: '/splash',
   routes: [
     GoRoute(
       path: '/',
@@ -57,8 +83,22 @@ final GoRouter _router = GoRouter(
       builder: (context, state) => const ManageCategoriesPage(),
     ),
 
-
-    // TODO: Tambahkan rute '/edit/:id' jika diperlukan
+    GoRoute(
+      path: '/login',
+      builder: (context, state) => const LoginPage(),
+    ),
+    GoRoute(
+      path: '/splash',
+      builder: (context, state) => const SplashPage(),
+    ),
+    GoRoute(
+      path: '/slot',
+      builder: (context, state) => const SlotPage(),
+    ),
+    GoRoute(
+      path: '/profile',
+      builder: (context, state) => const ProfilePage(),
+    ),
   ],
 );
 

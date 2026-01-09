@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "1063656223278",
+    "project_id": "ingatin-projek",
+    "storage_bucket": "ingatin-projek.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1063656223278:android:c967fc63f936243aa3e5bf",
+        "android_client_info": {
+          "package_name": "com.pml.ingatin"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1063656223278-smq85b18mobrsqmfcis1es9oigjisa0k.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.pml.ingatin",
+            "certificate_hash": "0c5925f89a367ef26eaa70aa1fa0a23454da751e"
+          }
+        },
+        {
+          "client_id": "1063656223278-7s1vjc5jmijf1olacaj1f655m6eph2uj.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD-0TdAmXZ5RxnAOhqlvhT5jEmvf9Qm700"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1063656223278-7s1vjc5jmijf1olacaj1f655m6eph2uj.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

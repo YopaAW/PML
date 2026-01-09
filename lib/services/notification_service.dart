@@ -77,14 +77,13 @@ class NotificationService {
       case RecurrenceType.monthly:
         matchDateTimeComponents = DateTimeComponents.dayOfMonthAndTime;
         break;
-
       case RecurrenceType.none:
-      default: // Handle yearly or any future additions gracefully
+      default: 
         break;
     }
     
     await flutterLocalNotificationsPlugin.zonedSchedule(
-      reminder.id,
+      _getNotificationId(reminder.id),
       reminder.title,
       reminder.description ?? '',
       tz.TZDateTime.from(reminder.eventDate, tz.local),
@@ -98,11 +97,18 @@ class NotificationService {
         ),
         iOS: DarwinNotificationDetails(),
       ),
-                androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,      matchDateTimeComponents: matchDateTimeComponents,
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      matchDateTimeComponents: matchDateTimeComponents,
     );
   }
 
-  Future<void> cancelNotification(int id) async {
-    await flutterLocalNotificationsPlugin.cancel(id);
+  
+  /// Convert String ID to int hash for notification ID
+  int _getNotificationId(String id) {
+    return id.hashCode;
+  }
+
+  Future<void> cancelNotification(String id) async {
+    await flutterLocalNotificationsPlugin.cancel(_getNotificationId(id));
   }
 }

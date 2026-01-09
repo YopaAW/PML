@@ -1,4 +1,4 @@
-package com.example.ingatin
+package com.pml.ingatin
 
 import io.flutter.embedding.android.FlutterActivity
 

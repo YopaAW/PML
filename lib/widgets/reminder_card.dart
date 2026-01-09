@@ -48,12 +48,12 @@ class ReminderCard extends ConsumerWidget {
               const SizedBox(height: 8),
               Text(
                 'Jadwal: $formattedDate',
-                style: theme.textTheme.bodyMedium?.copyWith(color: theme.textTheme.bodyMedium?.color?.withOpacity(0.7)),
+                style: theme.textTheme.bodyMedium?.copyWith(color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.7)),
               ),
               const SizedBox(height: 4),
               Text(
                 'Kategori: ${category.name}',
-                style: theme.textTheme.bodyMedium?.copyWith(color: theme.textTheme.bodyMedium?.color?.withOpacity(0.7)),
+                style: theme.textTheme.bodyMedium?.copyWith(color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.7)),
               ),
               if (reminder.description != null && reminder.description!.isNotEmpty)
                 Padding(

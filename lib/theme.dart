@@ -83,7 +83,7 @@ class AppTheme {
       seedColor: palette.primaryColor,
       brightness: Brightness.light,
       secondary: palette.accentColor,
-    ).copyWith(background: _lightBackgroundColor),
+    ).copyWith(surface: _lightBackgroundColor),
   );
 
   static ThemeData darkTheme(AppColorPalette palette) => ThemeData(
@@ -135,6 +135,6 @@ class AppTheme {
       seedColor: palette.primaryColor,
       brightness: Brightness.dark,
       secondary: palette.accentColor,
-    ).copyWith(background: _darkBackgroundColor),
+    ).copyWith(surface: _darkBackgroundColor),
   );
 }

@@ -1,11 +1,11 @@
-import 'package:hive/hive.dart';
+﻿import 'package:hive/hive.dart';
 
 part 'category_model.g.dart';
 
 @HiveType(typeId: 1)
 class Category {
   @HiveField(0)
-  final int id;
+  final String id;
   @HiveField(1)
   final String name;
   @HiveField(2)
@@ -21,7 +21,7 @@ class Category {
   });
 
   Category copyWith({
-    int? id,
+    String? id,
     String? name,
     bool? isCustom,
     bool? isPremium,
@@ -36,16 +36,33 @@ class Category {
 
   factory Category.fromJson(Map<String, dynamic> json) {
     return Category(
-      id: json['id'] as int,
+      id: json['id'] as String,
       name: json['name'] as String,
-      isCustom: json['isCustom'] as bool,
-      isPremium: json['isPremium'] as bool,
+      isCustom: json['isCustom'] as bool? ?? false,
+      isPremium: json['isPremium'] as bool? ?? false,
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
       'id': id,
+      'name': name,
+      'isCustom': isCustom,
+      'isPremium': isPremium,
+    };
+  }
+
+  factory Category.fromFirestore(Map<String, dynamic> data, String documentId) {
+    return Category(
+      id: documentId,
+      name: data['name'] as String? ?? '',
+      isCustom: data['isCustom'] as bool? ?? false,
+      isPremium: data['isPremium'] as bool? ?? false,
+    );
+  }
+
+  Map<String, dynamic> toFirestore() {
+    return {
       'name': name,
       'isCustom': isCustom,
       'isPremium': isPremium,
